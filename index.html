@@ -1,0 +1,2500 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>متابعة مشاريع الساحل الغربي</title>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<style>
+:root{
+  --navy:#0f172a;--blue:#1e40af;--blue2:#2563eb;
+  --green:#059669;--red:#dc2626;--yellow:#d97706;--purple:#7c3aed;--cyan:#0891b2;
+  --bg:#f0f4fb;--card:#fff;--border:#e2e8f0;--muted:#64748b;--text:#0f172a;
+  --sh:0 1px 3px rgba(0,0,0,.07),0 4px 16px rgba(0,0,0,.05);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Tajawal',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+.screen{display:none;min-height:100vh;align-items:center;justify-content:center;padding:20px;
+  position:relative;
+  overflow:hidden;
+  /* صورة بنية تحتية — منشآت طاقة وميناء */
+  background:
+    linear-gradient(135deg, rgba(10,22,40,.85) 0%, rgba(15,52,96,.75) 100%),
+    url('https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=1600&q=80&auto=format&fit=crop') center/cover no-repeat;
+}
+.screen::after{
+  content:'';
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(255,255,255,.025) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,.025) 1px, transparent 1px);
+  background-size:60px 60px;
+  pointer-events:none;
+}
+.screen.on{display:flex}
+.sc{background:rgba(255,255,255,.97);backdrop-filter:blur(20px);border-radius:20px;padding:32px 28px;width:100%;max-width:420px;box-shadow:0 24px 80px rgba(0,0,0,.5);position:relative;z-index:10;border:1px solid rgba(255,255,255,.2)}
+.sc-logo{text-align:center;margin-bottom:24px}
+.sc-logo .ico{font-size:44px;margin-bottom:8px}
+.sc-logo h1{font-size:20px;font-weight:900;color:var(--navy)}
+.sc-logo p{font-size:13px;color:var(--muted);margin-top:4px}
+.fg{margin-bottom:14px}
+label{display:block;font-size:12px;font-weight:700;color:var(--muted);margin-bottom:5px}
+input,select,textarea{width:100%;padding:10px 13px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:'Tajawal',sans-serif;background:#fff;color:var(--text);transition:border-color .2s;outline:none}
+input:focus,select:focus,textarea:focus{border-color:var(--blue2);box-shadow:0 0 0 3px #2563eb15}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+@media(max-width:500px){.frow{grid-template-columns:1fr}}
+.err{background:#fff5f5;border:1px solid #fca5a5;color:var(--red);padding:10px 14px;border-radius:9px;font-size:13px;font-weight:600;margin-bottom:14px;display:none}
+.err.on{display:block}
+.btn{padding:10px 18px;border-radius:10px;border:none;cursor:pointer;font-size:13px;font-weight:700;font-family:'Tajawal',sans-serif;transition:all .2s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.btn-blue{background:linear-gradient(135deg,var(--blue),var(--blue2));color:#fff}
+.btn-blue:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(37,99,235,.4)}
+.btn-green{background:linear-gradient(135deg,var(--green),#047857);color:#fff}
+.btn-green:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(5,150,105,.4)}
+.btn-red{background:#fff5f5;color:var(--red);border:1px solid #fecaca}
+.btn-red:hover{background:var(--red);color:#fff}
+.btn-gray{background:var(--bg);color:var(--muted);border:1.5px solid var(--border)}
+.btn-gray:hover{background:var(--border)}
+.btn-sm{padding:4px 10px;font-size:11px;border-radius:7px}
+.btn-full{width:100%;justify-content:center;padding:12px}
+nav{background:var(--navy);min-height:52px;display:flex;align-items:center;justify-content:space-between;padding:8px 16px;position:sticky;top:0;z-index:200;box-shadow:0 2px 12px rgba(0,0,0,.3);flex-wrap:wrap;gap:6px}
+.brand{color:#fff;font-size:14px;font-weight:800;display:flex;align-items:center;gap:6px}
+.tabs{display:flex;gap:3px;flex-wrap:wrap}
+.tab{padding:6px 14px;border-radius:8px;border:none;cursor:pointer;font-size:12px;font-weight:700;font-family:'Tajawal',sans-serif;color:#94a3b8;background:transparent;transition:all .2s}
+.tab.on{background:var(--blue2);color:#fff}
+.nav-right{display:flex;align-items:center;gap:8px}
+.ubadge{background:#1e3a5f;color:#fff;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700}
+.rbadge{padding:3px 10px;border-radius:20px;font-size:10px;font-weight:700}
+.filter-bar{background:#fff;border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;position:sticky;top:52px;z-index:100;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.filter-bar-label{font-size:12px;font-weight:800;color:var(--navy);white-space:nowrap}
+.filter-tags{display:flex;gap:6px;flex-wrap:wrap;flex:1}
+.ftag{display:flex;align-items:center;gap:5px;background:var(--blue2);color:#fff;padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700}
+.ftag-remove{cursor:pointer;opacity:.7;font-size:13px;line-height:1}
+.ftag-remove:hover{opacity:1}
+.btn-add-filter{background:var(--bg);border:1.5px dashed var(--border);color:var(--muted);padding:5px 12px;border-radius:20px;cursor:pointer;font-size:11px;font-weight:700;font-family:'Tajawal',sans-serif;transition:all .2s}
+.btn-add-filter:hover{border-color:var(--blue2);color:var(--blue2)}
+.btn-clear-filters{background:none;border:none;color:var(--red);cursor:pointer;font-size:11px;font-weight:700;font-family:'Tajawal',sans-serif;padding:4px 8px}
+.page{display:none;padding:16px;animation:fi .3s}
+.page.on{display:block}
+@keyframes fi{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:none}}
+.kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px}
+@media(max-width:800px){.kpis{grid-template-columns:repeat(2,1fr)}}
+#kpiRow{display:grid;grid-template-columns:repeat(6,1fr);gap:12px;margin-bottom:18px}
+@media(max-width:1000px){#kpiRow{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:600px){#kpiRow{grid-template-columns:repeat(2,1fr)}}
+.kpi{background:var(--card);border-radius:14px;padding:16px 18px;box-shadow:var(--sh);border-top:4px solid;transition:transform .2s}
+.kpi:hover{transform:translateY(-2px)}
+.kpi-ico{font-size:18px;margin-bottom:5px}
+.kpi-v{font-size:24px;font-weight:900;letter-spacing:-1px}
+.kpi-s{font-size:10px;color:#94a3b8;margin-top:2px}
+.ch3{display:grid;grid-template-columns:1.1fr 1fr .9fr;gap:12px;margin-bottom:18px}
+@media(max-width:900px){.ch3{grid-template-columns:1fr}}
+.cc{background:var(--card);border-radius:14px;padding:16px;box-shadow:var(--sh)}
+.ct{font-size:12px;font-weight:800;color:var(--navy);margin-bottom:12px;display:flex;justify-content:space-between;align-items:center}
+.alert-box{border-radius:14px;padding:14px 18px;display:flex;gap:12px;margin-bottom:18px;border:1.5px solid}
+.p2layout{display:grid;grid-template-columns:1fr;gap:14px}
+.p2top{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+@media(max-width:700px){.p2top{grid-template-columns:1fr}}
+.tw{background:var(--card);border-radius:14px;overflow:hidden;box-shadow:var(--sh)}
+.th2{padding:12px 16px;background:var(--navy);display:flex;justify-content:space-between;align-items:center}
+.tsc{overflow-x:auto;-webkit-overflow-scrolling:touch}
+table{width:100%;border-collapse:collapse}
+th{padding:9px 13px;background:#1e3a5f;color:#fff;font-size:11px;font-weight:700;text-align:right;white-space:nowrap}
+td{padding:8px 13px;font-size:12px;border-bottom:1px solid var(--border);vertical-align:middle}
+tr:hover td{background:#f8faff}
+tr:last-child td{border:none}
+.db{padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700}
+.ok{background:#d1fae5;color:#065f46;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700}
+.bad{background:#fee2e2;color:#991b1b;padding:2px 9px;border-radius:20px;font-size:11px;font-weight:700}
+.mb{display:flex;align-items:center;gap:5px}
+.mbt{flex:1;background:#e2e8f0;border-radius:3px;height:5px;overflow:hidden;min-width:50px}
+.mbf{height:100%;border-radius:3px}
+.mbp{font-size:11px;font-weight:700;min-width:30px}
+.mgmt{display:grid;grid-template-columns:1fr 380px;gap:16px}
+@media(max-width:900px){.mgmt{grid-template-columns:1fr}}
+.mgmt-form{background:var(--card);border-radius:14px;padding:20px;box-shadow:var(--sh);position:sticky;top:110px;height:fit-content}
+@media(max-width:900px){.mgmt-form{position:static}}
+.cf-item{display:flex;align-items:center;gap:8px;padding:10px 12px;background:var(--bg);border-radius:10px;margin-bottom:8px;border:1.5px solid var(--border)}
+.cf-label{flex:1;font-size:13px;font-weight:700;color:var(--navy)}
+.cf-type{font-size:11px;color:var(--muted);background:#fff;padding:2px 8px;border-radius:6px;border:1px solid var(--border)}
+.ugrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px;margin-bottom:20px}
+.ucard{background:var(--card);border-radius:14px;padding:18px;box-shadow:var(--sh)}
+.overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:400;align-items:center;justify-content:center;padding:16px;animation:fi .2s}
+.overlay.on{display:flex}
+.modal{background:#fff;border-radius:18px;padding:22px;width:500px;max-width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.3)}
+.modal-sm{width:360px}
+.modal-title{font-size:15px;font-weight:900;color:var(--navy);margin-bottom:18px;padding-bottom:10px;border-bottom:2px solid var(--border);display:flex;justify-content:space-between;align-items:center}
+.modal-close{background:none;border:none;font-size:20px;cursor:pointer;color:var(--muted)}
+.toast{position:fixed;bottom:24px;left:50%;transform:translateX(-50%);background:var(--navy);color:#fff;padding:11px 22px;border-radius:12px;font-size:13px;font-weight:700;font-family:'Tajawal',sans-serif;z-index:600;opacity:0;transition:opacity .3s;pointer-events:none;max-width:90vw;text-align:center}
+.toast.show{opacity:1}
+.ibar{margin-bottom:12px}
+.ibar-h{display:flex;justify-content:space-between;margin-bottom:4px;font-size:11px;font-weight:700}
+.pbt{background:#e2e8f0;border-radius:4px;height:7px;overflow:hidden}
+.pbf{height:100%;border-radius:4px}
+</style>
+</head>
+<body>
+
+<div class="screen" id="setupScreen">
+  <div class="sc">
+    <div class="sc-logo"><div class="ico">⚙️</div><h1>إعداد النظام</h1><p>أدخل بيانات Supabase مرة واحدة فقط</p></div>
+    <div class="err" id="setupErr"></div>
+    <div style="background:var(--bg);border-radius:10px;padding:12px;margin-bottom:14px;font-size:12px;color:var(--muted);line-height:1.8">
+      <b style="color:var(--navy)">من Supabase:</b> القائمة ← Settings ← API<br>
+      انسخ: <b>Project URL</b> و <b>anon public key</b>
+    </div>
+    <div class="fg"><label>Project URL</label><input type="text" id="s_url" placeholder="https://xxxx.supabase.co"></div>
+    <div class="fg"><label>Anon Public Key</label><input type="text" id="s_key" placeholder="eyJhbGciOiJIUzI1NiIs..."></div>
+    <button class="btn btn-blue btn-full" onclick="saveSetup()">💾 حفظ وبدء النظام</button>
+  </div>
+</div>
+
+<div class="screen" id="loginScreen">
+  <div class="sc">
+    <div class="sc-logo">
+  <!-- أيقونات القطاعات الأربعة -->
+  <div style="display:flex;justify-content:center;gap:10px;margin-bottom:14px">
+    <div style="background:linear-gradient(135deg,#1e3a5f,#2563eb);width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 12px #2563eb44">⚡</div>
+    <div style="background:linear-gradient(135deg,#064e3b,#059669);width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 12px #05966944">🚢</div>
+    <div style="background:linear-gradient(135deg,#78350f,#d97706);width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 12px #d9770644">🏭</div>
+    <div style="background:linear-gradient(135deg,#4c1d95,#7c3aed);width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;box-shadow:0 4px 12px #7c3aed44">🛡️</div>
+  </div>
+  <h1 style="font-size:18px;line-height:1.4">متابعة مشاريع الساحل الغربي</h1>
+  <p>سجّل دخولك للمتابعة</p>
+</div>
+    <div class="err" id="loginErr"></div>
+    <div class="fg"><label>الرقم الوظيفي أو البريد الإلكتروني</label><input type="text" id="l_email" placeholder="مثال: 450912 أو admin@company.com"></div>
+    <div class="fg"><label>كلمة المرور</label><input type="password" id="l_pass" placeholder="••••••••" onkeydown="if(event.key==='Enter')doLogin()"></div>
+    <button class="btn btn-blue btn-full" id="loginBtn" onclick="doLogin()">🔐 تسجيل الدخول</button>
+    <button class="btn btn-gray btn-full" style="margin-top:8px" onclick="openChangePassLogin()">🔑 تغيير كلمة المرور</button>
+    <button class="btn btn-gray btn-full" style="margin-top:8px" onclick="showSetup()">⚙️ إعادة إعداد النظام</button>
+  </div>
+</div>
+
+<div id="app" style="display:none">
+  <nav>
+    <div class="brand">🏗 الساحل الغربي</div>
+    <div class="tabs" id="navTabs"></div>
+    <div class="nav-right">
+      <span class="ubadge" id="userName"></span>
+      <span class="rbadge" id="userRole"></span>
+      <button class="btn btn-gray btn-sm" onclick="openChangePass()">🔑 كلمة المرور</button>
+      <button class="btn btn-gray btn-sm" onclick="doLogout()">خروج</button>
+    </div>
+  </nav>
+
+  <div class="filter-bar" id="filterBar">
+    <span class="filter-bar-label">🔍 فلترة:</span>
+    <div class="filter-tags" id="filterTags">
+      <span style="font-size:11px;color:var(--muted)">لا توجد فلاتر — تعرض جميع المشاريع</span>
+    </div>
+    <button class="btn-add-filter" onclick="openFilterModal()">＋ إضافة فلتر</button>
+    <button class="btn-clear-filters" id="clearFiltersBtn" onclick="clearAllFilters()" style="display:none">✕ مسح الكل</button>
+  </div>
+
+  <div class="page on" id="page1">
+    <!-- هيدر الصفحة -->
+    <div style="background:linear-gradient(135deg,#0f172a,#1e3a5f);border-radius:16px;padding:20px 24px;margin-bottom:18px;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:12px">
+      <div>
+        <div style="font-size:11px;font-weight:700;color:#64748b;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px">EXECUTIVE DASHBOARD</div>
+        <div style="font-size:22px;font-weight:900;color:#fff;letter-spacing:-.5px">الملخص التنفيذي</div>
+        <div style="font-size:12px;color:#94a3b8;margin-top:4px" id="p1sub"></div>
+      </div>
+      <div style="text-align:left">
+        <div style="font-size:10px;color:#64748b;margin-bottom:4px">آخر تحديث</div>
+        <div style="color:#fff;font-size:12px;font-weight:700" id="dateStamp"></div>
+      </div>
+    </div>
+
+    <!-- بطاقات KPI - صف أول -->
+    <div id="kpiRow"></div>
+
+    <!-- الصف الثاني: رسومات بيانية -->
+    <div style="display:grid;grid-template-columns:1.4fr 1fr;gap:14px;margin-bottom:14px">
+      <div class="cc">
+        <div class="ct">المعتمد والمصروف حسب الإدارة <span style="font-size:10px;color:var(--muted);font-weight:500">نسبة من الميزانية %</span></div>
+        <canvas id="deptChart" height="170"></canvas>
+        <div id="deptChartLegend" style="margin-top:8px"></div>
+      </div>
+      <div class="cc">
+        <div class="ct">الميزانية والمعتمد والمصروف <span style="font-size:10px;color:var(--muted);font-weight:500">مقارنة مالية</span></div>
+        <canvas id="donutChart" height="150"></canvas>
+        <div id="donutLegend" style="margin-top:8px"></div>
+      </div>
+    </div>
+
+    <!-- الصف الثالث -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+      <div class="cc">
+        <div class="ct">الإنجاز الفعلي مقابل المخطط <span style="font-size:10px;color:var(--muted);font-weight:500">حسب الإدارة</span></div>
+        <div id="deptProgressBars"></div>
+      </div>
+      <div class="cc">
+        <div class="ct">توزيع المشاريع حسب الحالة</div>
+        <canvas id="statusChart" height="160"></canvas>
+      </div>
+    </div>
+
+    <!-- الصف الرابع: أكثر تأخيراً + أكبر ميزانية -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+      <div class="cc" id="topDelayedSection">
+        <div class="ct">⏱ أعلى المشاريع تأخيراً <span style="font-size:10px;color:var(--muted);font-weight:500">تنازلياً</span></div>
+        <div class="tsc"><table style="width:100%"><thead><tr>
+          <th>#</th><th>المشروع</th><th>الإدارة</th><th>أيام التأخير</th><th>نسبة التأخير</th><th>الإنجاز</th>
+        </tr></thead><tbody id="topDelayedBody"></tbody></table></div>
+      </div>
+      <div class="cc">
+        <div class="ct">💼 أكبر المشاريع ميزانيةً <span style="font-size:10px;color:var(--muted);font-weight:500">تنازلياً</span></div>
+        <div class="tsc"><table style="width:100%"><thead><tr>
+          <th>#</th><th>المشروع</th><th>الإدارة</th><th>الميزانية</th><th>الإنجاز</th>
+        </tr></thead><tbody id="topBudgetBody"></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- تنبيهات -->
+    <div class="alert-box" id="alertBox"></div>
+  </div>
+
+  <div class="page" id="page2">
+    <!-- هيدر -->
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-size:20px;font-weight:900">تفاصيل المشاريع</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px" id="p2sub"></div>
+      </div>
+      <!-- بحث سريع -->
+      <div style="display:flex;align-items:center;gap:8px">
+        <input type="text" id="p2Search" placeholder="🔍 بحث في المشاريع..." oninput="filterP2Table()"
+          style="padding:8px 14px;border:1.5px solid var(--border);border-radius:10px;font-size:13px;font-family:Tajawal,sans-serif;width:220px;outline:none">
+        <span style="background:var(--blue2);color:#fff;padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700" id="tblCnt"></span>
+      </div>
+    </div>
+
+    <!-- الجدول الاحترافي -->
+    <div class="tw">
+      <div class="tsc">
+        <table>
+          <thead>
+            <tr>
+              <th style="width:35%">اسم المشروع</th>
+              <th>الإدارة</th>
+              <th>المتعاقد</th>
+              <th>الميزانية</th>
+              <th>الإنجاز</th>
+              <th>الحالة</th>
+              <th>التأخير</th>
+              <th>تفصيل</th>
+            </tr>
+          </thead>
+          <tbody id="p2Tbl"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="page" id="page3">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-size:20px;font-weight:900">إدارة المشاريع</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">أضف وعدّل مشاريعك الجارية والمنتهية</div>
+      </div>
+      <div style="display:flex;gap:8px">
+        <button class="btn btn-green" onclick="clearForm()">＋ مشروع جديد</button>
+        <button class="btn btn-blue" onclick="openImportModal()">📥 استيراد من Excel</button>
+        <button class="btn btn-gray" onclick="exportToExcel()">📤 تصدير Excel</button>
+      </div>
+    </div>
+    <div class="mgmt">
+      <div class="tw">
+        <div class="th2">
+          <span style="color:#fff;font-size:13px;font-weight:800">📁 القائمة الحالية للمشاريع</span>
+          <span id="mgmtCnt" style="background:var(--blue2);color:#fff;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700"></span>
+        </div>
+        <div class="tsc"><table><thead><tr>
+          <th>#</th><th>المشروع</th><th>الإدارة</th><th>الإنجاز</th><th>الميزانية</th><th>الحالة</th><th>إجراءات</th>
+        </tr></thead><tbody id="mgmtTbl"></tbody></table></div>
+      </div>
+      <!-- النموذج مخفي بالبداية — يظهر عند الضغط على + مشروع جديد أو تعديل -->
+      <div class="mgmt-form" id="mgmtForm" style="display:none">
+        <div style="font-size:14px;font-weight:900;color:var(--navy);margin-bottom:14px;padding-bottom:10px;border-bottom:2px solid var(--border)" id="formTitle">➕ إضافة مشروع جديد</div>
+        <div id="dynamicProjectForm"></div>
+        <div class="fg"><label>الإدارة *</label><select id="f_dept"></select></div>
+        <div class="fg"><label>الحالة *</label><select id="f_status"></select></div>
+        <div class="fg">
+          <label>الرقم الوظيفي لمدير العقد</label>
+          <input type="text" id="f_contract_mgr" maxlength="6" placeholder="مثال: 450912" oninput="this.value=this.value.replace(/[^0-9]/g,'')">
+        </div>
+        <div id="customFieldsForm"></div>
+        <input type="hidden" id="f_id">
+        <button class="btn btn-green btn-full" onclick="saveProject()">💾 حفظ وحفظ المشروع</button>
+        <button class="btn btn-gray btn-full" style="margin-top:8px" onclick="hideForm()">✕ إغلاق</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="page" id="page4">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-size:20px;font-weight:900">حقول المشروع</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">جميع الحقول مطابقة لأعمدة ملف Excel — المصدر الوحيد للحقيقة</div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn btn-green" onclick="openAddField()">＋ حقل جديد</button>
+      </div>
+    </div>
+
+    <!-- شرح المزامنة -->
+    <div style="background:linear-gradient(135deg,#eff6ff,#dbeafe);border:1.5px solid #bfdbfe;border-radius:12px;padding:14px 18px;margin-bottom:16px;display:flex;gap:12px;align-items:flex-start">
+      <div style="font-size:20px">💡</div>
+      <div style="font-size:12px;color:#1e40af;line-height:1.9">
+        <b>كيف تضيف حقلاً جديداً؟</b><br>
+        ١. أضف العمود في ملف Excel &nbsp;→&nbsp;
+        ٢. استورد الملف (📥 استيراد من Excel) &nbsp;→&nbsp;
+        ٣. الحقل يظهر هنا تلقائياً<br>
+        <b>زر المزامنة:</b> يزيل الحقول المكررة ويرتب القائمة بناءً على أعمدة Excel الثابتة
+      </div>
+    </div>
+
+    <!-- القوائم الأساسية -->
+    <div class="cc" style="margin-bottom:14px">
+      <div class="ct">⚙️ القوائم الأساسية
+        <span style="font-size:10px;color:var(--muted);font-weight:500">الإدارات والحالات — تؤثر على الفلترة والتقارير</span>
+      </div>
+      <div id="basicFieldsList"></div>
+    </div>
+
+    <!-- الحقول الكاملة -->
+    <div class="cc">
+      <div class="ct">📋 حقول المشروع الكاملة
+        <span style="font-size:10px;color:var(--muted);font-weight:500">مطابقة لأعمدة Excel</span>
+      </div>
+      <div id="allFieldsList"></div>
+    </div>
+  </div>
+
+  <div class="page" id="page5">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:10px">
+      <div>
+        <div style="font-size:20px;font-weight:900">إدارة الهيكل والمستخدمين</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">إنشاء وإدارة حسابات الموظفين بالرقم الوظيفي وتعيين الصلاحيات</div>
+      </div>
+      <button class="btn btn-green" onclick="openAddUser()">＋ مستخدم وظيفي جديد</button>
+    </div>
+    <div class="ugrid" id="usersGrid"></div>
+  </div>
+</div>
+
+<!-- FILTER MODAL -->
+<div class="overlay" id="filterOv" onclick="closeOv('filterOv')">
+  <div class="modal modal-sm" onclick="event.stopPropagation()">
+    <div class="modal-title">🔍 إضافة فلتر ذكي<button class="modal-close" onclick="closeOv('filterOv')">✕</button></div>
+    <div class="fg"><label>الحقل المستهدف</label><select id="fil_field" onchange="onFilterFieldChange()"></select></div>
+    <div class="fg" id="fil_val_wrap" style="display:none">
+      <label id="fil_val_label">القيمة</label>
+      <div id="fil_val_input"></div>
+    </div>
+    <button class="btn btn-blue btn-full" onclick="applyFilter()">✅ تطبيق الفلتر</button>
+  </div>
+</div>
+
+<!-- FIELD MODAL -->
+<div class="overlay" id="fieldOv" onclick="closeOv('fieldOv')">
+  <div class="modal modal-sm" onclick="event.stopPropagation()">
+    <div class="modal-title"><span id="fieldOvTitle">➕ حقل مخصص جديد</span><button class="modal-close" onclick="closeOv('fieldOv')">✕</button></div>
+    <div class="err" id="fieldErr"></div>
+    <div class="fg"><label>اسم الحقل *</label><input type="text" id="nf_label" placeholder="مثال: الجهة المشرفة"></div>
+    <div class="fg"><label>نوع البيانات</label>
+      <select id="nf_type" onchange="onFieldTypeChange()">
+        <option value="text">نص مفتوح</option>
+        <option value="number">رقم عددي</option>
+        <option value="percent">نسبة مئوية %</option>
+        <option value="date">تاريخ</option>
+        <option value="select">قائمة خيارات منسدلة</option>
+      </select></div>
+    <div class="fg" id="nf_opts_wrap" style="display:none">
+      <label>خيارات القائمة (افصل بفاصلة) *</label>
+      <textarea id="nf_opts" rows="3" placeholder="شركة سابك, شركة معادن, أرامكو السعودية"></textarea>
+    </div>
+    <input type="hidden" id="nf_key">
+    <button class="btn btn-blue btn-full" onclick="saveField()">💾 حفظ الحقل</button>
+  </div>
+</div>
+
+<!-- BASIC FIELD EDIT MODAL -->
+<div class="overlay" id="basicFieldEditOv" onclick="closeOv('basicFieldEditOv')">
+  <div class="modal modal-sm" onclick="event.stopPropagation()">
+    <div class="modal-title">✏️ تعديل قائمة: <span id="bfTitle"></span><button class="modal-close" onclick="closeOv('basicFieldEditOv')">✕</button></div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px">أدخل كل خيار في سطر منفصل.</div>
+    <div class="fg"><textarea id="bfItemsTextarea" rows="8" style="line-height:1.6;font-family:inherit"></textarea></div>
+    <input type="hidden" id="bfKey">
+    <button class="btn btn-blue btn-full" onclick="saveBasicFieldItems()">💾 تحديث القائمة</button>
+  </div>
+</div>
+
+<!-- PROJECT FIELD EDIT MODAL -->
+<div class="overlay" id="pfEditOv" onclick="closeOv('pfEditOv')">
+  <div class="modal modal-sm" onclick="event.stopPropagation()">
+    <div class="modal-title">✏️ تعديل حقل المشروع<button class="modal-close" onclick="closeOv('pfEditOv')">✕</button></div>
+    <div class="fg"><label>اسم الحقل *</label><input type="text" id="pf_label"></div>
+    <div class="fg"><label>نوع البيانات</label>
+      <select id="pf_type">
+        <option value="text">نص مفتوح</option><option value="number">رقم عددي</option>
+        <option value="percent">نسبة مئوية %</option><option value="date">تاريخ</option>
+      </select></div>
+    <div class="fg" style="display:flex;align-items:center;gap:10px">
+      <input type="checkbox" id="pf_required" style="width:auto">
+      <label style="margin:0">حقل إلزامي *</label>
+    </div>
+    <input type="hidden" id="pf_key">
+    <button class="btn btn-blue btn-full" onclick="savePFEdit()">💾 حفظ التعديلات</button>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="overlay" id="detailOv" onclick="closeOv('detailOv')">
+  <div class="modal" onclick="event.stopPropagation()">
+    <div class="modal-title"><span id="modalTitle"></span><button class="modal-close" onclick="closeOv('detailOv')">✕</button></div>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<!-- ADD USER MODAL -->
+<div class="overlay" id="userOv" onclick="closeOv('userOv')">
+  <div class="modal modal-sm" onclick="event.stopPropagation()">
+    <div class="modal-title">👥 حساب موظف جديد<button class="modal-close" onclick="closeOv('userOv')">✕</button></div>
+    <div class="err" id="userErr"></div>
+    <div class="fg"><label>اسم الموظف الثلاثي *</label><input type="text" id="u_name" placeholder="مثال: خالد عبدالله الحربي"></div>
+    <div class="fg"><label>الرقم الوظيفي (6 خانات) *</label><input type="text" id="u_emp_id" maxlength="6" placeholder="450912" oninput="this.value=this.value.replace(/[^0-9]/g,'')"></div>
+    <div class="fg"><label>كلمة المرور المبدئية *</label><input type="password" id="u_pass" placeholder="••••••••"></div>
+    <div class="fg"><label>الدور والصلاحية *</label>
+      <select id="u_role" onchange="onUserRoleModalChange()">
+        <option value="">-- اختر --</option>
+        <option value="general_manager">مدير عام — إشراف شامل</option>
+        <option value="dept_manager">مدير إدارة — صلاحية إدارة مخصصة</option>
+        <option value="contract_manager">مدير عقد — صلاحية العقود التابعة له</option>
+      </select></div>
+    <div class="fg" id="deptModalFld" style="display:none"><label>الإدارة التابع لها</label><select id="u_dept"></select></div>
+    <button class="btn btn-blue btn-full" onclick="addUser()">💾 إنشاء الحساب</button>
+  </div>
+</div>
+
+<!-- EDIT USER MODAL -->
+<div class="overlay" id="editUserOv" onclick="closeOv('editUserOv')">
+  <div class="modal modal-sm" onclick="event.stopPropagation()">
+    <div class="modal-title">✏️ تعديل بيانات الموظف<button class="modal-close" onclick="closeOv('editUserOv')">✕</button></div>
+    <div class="err" id="editUserErr"></div>
+    <div class="fg"><label>اسم الموظف الثلاثي *</label><input type="text" id="eu_name"></div>
+    <div class="fg"><label>الدور والصلاحية *</label>
+      <select id="eu_role" onchange="onEditUserRoleChange()">
+        <option value="">-- اختر --</option>
+        <option value="general_manager">مدير عام</option>
+        <option value="dept_manager">مدير إدارة</option>
+        <option value="contract_manager">مدير عقد</option>
+      </select></div>
+    <div class="fg" id="editDeptFld" style="display:none"><label>الإدارة التابع لها</label><select id="eu_dept"></select></div>
+    <div class="fg"><label>كلمة مرور جديدة (اتركها فارغة إن لم تريد التغيير)</label><input type="password" id="eu_pass" placeholder="••••••••"></div>
+    <input type="hidden" id="eu_id">
+    <button class="btn btn-blue btn-full" onclick="saveEditUser()">💾 حفظ التعديلات</button>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div class="overlay" id="delOv" onclick="closeOv('delOv')">
+  <div class="modal modal-sm" style="text-align:center" onclick="event.stopPropagation()">
+    <div style="font-size:36px;margin-bottom:10px">🗑️</div>
+    <div style="font-size:16px;font-weight:800;margin-bottom:8px">تأكيد الحذف</div>
+    <div style="font-size:13px;color:var(--muted);margin-bottom:20px" id="delMsg"></div>
+    <div style="display:flex;gap:10px">
+      <button class="btn btn-red btn-full" onclick="confirmDel()">نعم، احذف نهائياً</button>
+      <button class="btn btn-gray btn-full" onclick="closeOv('delOv')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+<!-- تغيير كلمة المرور (داخل التطبيق) -->
+<div class="overlay" id="changePassOv" onclick="closeOv('changePassOv')">
+  <div class="modal modal-sm" onclick="event.stopPropagation()">
+    <div class="modal-title">🔑 تغيير كلمة المرور<button class="modal-close" onclick="closeOv('changePassOv')">✕</button></div>
+    <div class="err" id="changePassErr"></div>
+    <div class="fg"><label>كلمة المرور الجديدة *</label><input type="password" id="cp_new" placeholder="••••••••"></div>
+    <div class="fg"><label>تأكيد كلمة المرور الجديدة *</label><input type="password" id="cp_confirm" placeholder="••••••••"></div>
+    <button class="btn btn-blue btn-full" onclick="doChangePass()">💾 حفظ كلمة المرور الجديدة</button>
+  </div>
+</div>
+
+<!-- تغيير كلمة المرور (من صفحة تسجيل الدخول) -->
+<div class="overlay" id="changePassLoginOv" onclick="closeOv('changePassLoginOv')">
+  <div class="modal modal-sm" onclick="event.stopPropagation()">
+    <div class="modal-title">🔑 تغيير كلمة المرور<button class="modal-close" onclick="closeOv('changePassLoginOv')">✕</button></div>
+    <div class="err" id="changePassLoginErr"></div>
+    <div style="background:var(--bg);border-radius:10px;padding:10px;margin-bottom:14px;font-size:12px;color:var(--muted);line-height:1.7">
+      أدخل رقمك الوظيفي وكلمة المرور الحالية للتحقق، ثم اختر كلمة مرور جديدة.
+    </div>
+    <div class="fg"><label>الرقم الوظيفي *</label><input type="text" id="cpl_emp" maxlength="6" placeholder="450912" oninput="this.value=this.value.replace(/[^0-9]/g,'')"></div>
+    <div class="fg"><label>كلمة المرور الحالية *</label><input type="password" id="cpl_old" placeholder="••••••••"></div>
+    <div class="fg"><label>كلمة المرور الجديدة *</label><input type="password" id="cpl_new" placeholder="••••••••"></div>
+    <div class="fg"><label>تأكيد كلمة المرور الجديدة *</label><input type="password" id="cpl_confirm" placeholder="••••••••"></div>
+    <button class="btn btn-blue btn-full" onclick="doChangePassLogin()">💾 تغيير كلمة المرور</button>
+  </div>
+</div>
+
+<!-- IMPORT MODAL -->
+<div class="overlay" id="importOv" onclick="closeOv('importOv')">
+  <div class="modal modal-sm" onclick="event.stopPropagation()">
+    <div class="modal-title">📥 استيراد من Excel<button class="modal-close" onclick="closeOv('importOv')">✕</button></div>
+    <div style="background:var(--bg);border-radius:10px;padding:12px;margin-bottom:14px;font-size:12px;color:var(--muted);line-height:1.9">
+      <b style="color:var(--navy)">📋 تعليمات:</b><br>
+      ١. تأكد أن الملف بصيغة <b>.xlsx</b><br>
+      ٢. يجب أن يحتوي على هذه الأعمدة: <b>اسم المشروع، الإدارة، اسم المتعاقد، حالة العقد</b><br>
+      ٣. الأعمدة الإضافية ستُضاف تلقائياً كحقول مخصصة
+    </div>
+    <div class="err" id="importErr"></div>
+    <div class="fg">
+      <label>اختر ملف Excel</label>
+      <input type="file" id="importFile" accept=".xlsx,.xls" onchange="onImportFileChange()" style="padding:8px;cursor:pointer">
+    </div>
+    <div id="importPreview" style="display:none;background:var(--bg);border-radius:10px;padding:10px;margin-bottom:12px;font-size:12px">
+      <div id="importPreviewText"></div>
+    </div>
+    <div id="importProgress" style="display:none;margin-bottom:12px">
+      <div style="font-size:13px;font-weight:700;margin-bottom:8px;color:var(--navy)" id="importProgressText">جاري الاستيراد...</div>
+      <div class="pbt"><div class="pbf" id="importProgressBar" style="background:var(--blue2);transition:width .3s;width:0%"></div></div>
+    </div>
+    <button class="btn btn-blue btn-full" id="importBtn" onclick="doImport()" disabled style="opacity:.5">📥 بدء الاستيراد</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<!-- نافذة قرارات الأعمدة المفقودة -->
+<div class="overlay" id="missingColsOv" onclick="event.stopPropagation()">
+  <div class="modal modal-sm" onclick="event.stopPropagation()">
+    <div class="modal-title">⚠️ أعمدة غير موجودة في الملف<button class="modal-close" onclick="closeOv('missingColsOv')">✕</button></div>
+    <div style="background:#fffbeb;border:1px solid #fcd34d;border-radius:10px;padding:12px;margin-bottom:14px;font-size:12px;color:#92400e;line-height:1.8">
+      الأعمدة التالية لها بيانات محفوظة، لكنها <b>غير موجودة في الملف الذي اخترته</b>. اختر لكل عمود:<br>
+      • <b>إبقاء</b>: نحتفظ بالقيم القديمة كما هي.<br>
+      • <b>مسح</b>: نفرّغ القيم في كل المشاريع التي يحدّثها الملف.
+    </div>
+    <div id="missingColsList"></div>
+    <div style="display:flex;gap:8px;margin-top:16px">
+      <button class="btn btn-blue" style="flex:1;justify-content:center" onclick="confirmMissingCols()">✅ متابعة الاستيراد</button>
+      <button class="btn btn-gray" style="flex:1;justify-content:center" onclick="closeOv('missingColsOv')">إلغاء</button>
+    </div>
+  </div>
+</div>
+
+
+<script>
+/* ═══════════════════════════════════════════════════════════
+   ⚙️ إعدادات الاتصال بـ Supabase — عدّل السطرين التاليين فقط
+   ───────────────────────────────────────────────────────────
+   ضع رابط مشروعك ومفتاح anon (العلني الآمن) بين علامتي التنصيص.
+   • الرابط: من Supabase → Settings → Data API → Project URL
+   • المفتاح: من Supabase → Settings → API Keys → anon public
+   اتركهما فارغين '' إذا تريد شاشة الإعداد اليدوي بدلاً من ذلك.
+   ═══════════════════════════════════════════════════════════ */
+const PRESET_SB_URL = 'https://tcitxnrfwhhbqjwjikhk.supabase.co';   // رابط المشروع
+const PRESET_SB_KEY = 'sb_publishable_mWaQVru_0l0643idXQzpYQ_HtKeveNU';   // مفتاح publishable (علني آمن)
+
+let sb=null,currentUser=null,currentProfile=null;
+let allProjects=[],activeFilters=[],pendingDel=null,pendingDelType=null;
+let p2BarCh=null,p2PieCh=null,deptCh=null,donutCh=null,statusCh=null;
+
+function getDeptColor(n){
+  const s={'النقل':'#3b82f6','الطاقة':'#f59e0b','الإنتاج':'#10b981','الأمنية':'#ef4444'};
+  if(s[n])return s[n];
+  let h=0;for(let i=0;i<n.length;i++)h=n.charCodeAt(i)+((h<<5)-h);
+  return`hsl(${Math.abs(h)%360},65%,45%)`;
+}
+
+const DEFAULT_BASIC_FIELDS={
+  departments:['النقل','الطاقة','الأمنية'],
+  regions:[],
+  statuses:[{k:'ONGOING',v:'جارٍ'},{k:'OVERDUE',v:'متأخر'},{k:'CLOSING',v:'إغلاق'}],
+  // حقول نموذج المشروع — مطابقة لأعمدة الإكسل تماماً
+  projectFields:[
+    {key:'name_ar',          label:'اسم المشروع',                       type:'text',   required:true, visible:true},
+    {key:'po_number',        label:'رقم أمر الشراء',                    type:'text',   required:false,visible:true},
+    {key:'contractor',       label:'اسم المتعاقد',                      type:'text',   required:false,visible:true},
+    {key:'budget',           label:'الميزانية (ريال)',                   type:'number', required:false,visible:true},
+    {key:'vo_amount',        label:'قيمة أوامر التغيير (ريال)',           type:'number', required:false,visible:true},
+    {key:'revised_value',    label:'قيمة العقد بعد التغيير (ريال)',       type:'number', required:false,visible:true},
+    {key:'approved',         label:'المعتمد (ريال)',                     type:'number', required:false,visible:true},
+    {key:'spent',            label:'المصروف (ريال)',                     type:'number', required:false,visible:true},
+    {key:'progress',         label:'نسبة الإنجاز الفعلية %',            type:'number', required:false,visible:true},
+    {key:'planned_progress', label:'نسبة الإنجاز المخططة %',            type:'number', required:false,visible:true},
+    {key:'project_status',   label:'حالة المشروع',                      type:'text',   required:false,visible:true},
+    {key:'pac_status',       label:'حالة الاستلام الابتدائي PAC',        type:'text',   required:false,visible:true},
+    {key:'fac_status',       label:'حالة الاستلام النهائي FAC',          type:'text',   required:false,visible:true},
+  ]
+};
+
+function getBasicFields(){let f=localStorage.getItem('basicFieldsConfig');return f?JSON.parse(f):JSON.parse(JSON.stringify(DEFAULT_BASIC_FIELDS));}
+function saveBasicFields(f){localStorage.setItem('basicFieldsConfig',JSON.stringify(f));}
+function getCFs(){return JSON.parse(localStorage.getItem('customFields')||'[]');}
+function saveCFs(f){localStorage.setItem('customFields',JSON.stringify(f));}
+function initSB(url,key){sb=supabase.createClient(url,key);}
+function getSBUrl(){return PRESET_SB_URL||localStorage.getItem('sb_url');}
+function getSBKey(){return PRESET_SB_KEY||localStorage.getItem('sb_key');}
+
+// ══════════════════════════════════════════════════
+// ✅ الإصلاح الرئيسي: دالة موحدة لقراءة extra_fields
+// تبحث بكل الأشكال الممكنة للمفتاح
+// ══════════════════════════════════════════════════
+function getExtraVal(ex, key){
+  if(!ex) return '';
+  // جرب المفتاح كما هو (cf_xxx)
+  if(ex[key] !== undefined && ex[key] !== null && ex[key] !== '') return String(ex[key]);
+  // جرب بدون cf_ (xxx)
+  const rawKey = key.replace(/^cf_/, '');
+  if(ex[rawKey] !== undefined && ex[rawKey] !== null && ex[rawKey] !== '') return String(ex[rawKey]);
+  // جرب بإضافة cf_ (في حال المفتاح بدونها)
+  const cfKey = 'cf_' + rawKey;
+  if(ex[cfKey] !== undefined && ex[cfKey] !== null && ex[cfKey] !== '') return String(ex[cfKey]);
+  return '';
+}
+
+// أيام التأخير
+// في ملفات Excel: تباين العقد سالب = تأخير، موجب = متقدم
+// delay_days المخزون دائماً موجب (عدد أيام التأخير)
+function getDelayDays(p){
+  // أولاً: الحقل المباشر delay_days (مخزون كقيمة موجبة)
+  if(+p.delay_days>0) return +p.delay_days;
+  // ثانياً: تباين العقد من extra_fields (السالب = تأخير)
+  const ex=p.extra_fields||{};
+  const raw=getExtraVal(ex,'تباين_العقد')||getExtraVal(ex,'cf_تباين_العقد')||getExtraVal(ex,'تباين العقد');
+  if(raw!==''){
+    const n=parseFloat(raw)||0;
+    // سالب = تأخير → نأخذ القيمة المطلقة، موجب = متقدم → 0
+    return n<0 ? Math.abs(n) : 0;
+  }
+  return 0;
+}
+
+// مدة المشروع شامل التمديد
+function getContractDuration(p){
+  const ex=p.extra_fields||{};
+  const v=getExtraVal(ex,'مدة_المشروع_شامل_التمديد')||getExtraVal(ex,'cf_مدة_المشروع_شامل_التمديد')||getExtraVal(ex,'مدة_المشروع');
+  return Math.max(0,parseInt(v)||0);
+}
+
+// نسبة التأخير % = تباين العقد ÷ مدة المشروع شامل التمديد × 100
+function getDelayPct(p){
+  const delay=getDelayDays(p);
+  const duration=getContractDuration(p);
+  if(!delay||!duration) return 0;
+  return Math.round(delay/duration*100);
+}
+
+// لون نسبة التأخير حسب الخطورة
+function getDelayPctColor(pct){
+  if(pct>=30) return '#dc2626'; // خطر
+  if(pct>=15) return '#d97706'; // تحذير
+  return '#f59e0b';              // منخفض
+}
+
+function saveSetup(){
+  const url=document.getElementById('s_url').value.trim();
+  const key=document.getElementById('s_key').value.trim();
+  if(!url||!key){showErr('setupErr','يرجى إدخال الحقول المطلوبة');return}
+  localStorage.setItem('sb_url',url);localStorage.setItem('sb_key',key);
+  initSB(url,key);hideScr('setupScreen');showScr('loginScreen');
+  toast('✅ تم حفظ الإعدادات','#059669');
+}
+
+function showSetup(){hideScr('loginScreen');showScr('setupScreen');}
+
+async function doLogin(){
+  const identifier=document.getElementById('l_email').value.trim();
+  const pass=document.getElementById('l_pass').value;
+  if(!identifier||!pass){showErr('loginErr','يرجى ملء جميع الحقول');return}
+  const btn=document.getElementById('loginBtn');btn.disabled=true;btn.textContent='جاري التحقق...';
+  let loginEmail=identifier;
+  if(!identifier.includes('@')){
+    if(identifier.length!==6){showErr('loginErr','الرقم الوظيفي يجب أن يكون 6 خانات');btn.disabled=false;btn.textContent='🔐 تسجيل الدخول';return}
+    loginEmail=`${identifier}@company.local`;
+  }
+  const{data,error}=await sb.auth.signInWithPassword({email:loginEmail,password:pass});
+  if(error){showErr('loginErr',error.message.includes('Invalid')?'الرقم الوظيفي أو كلمة المرور غير صحيحة':error.message);btn.disabled=false;btn.textContent='🔐 تسجيل الدخول';return}
+  currentUser=data.user;await loadProfile();
+}
+
+async function loadProfile(){
+  const{data,error}=await sb.from('profiles').select('*').eq('id',currentUser.id);
+  if(error||!data||!data.length){showErr('loginErr','لم يتم تفعيل الصلاحيات لهذا الحساب.');await sb.auth.signOut();return}
+  currentProfile=data[0];hideScr('loginScreen');startApp();
+}
+
+async function doLogout(){
+  await sb.auth.signOut();currentUser=null;currentProfile=null;allProjects=[];activeFilters=[];
+  document.getElementById('app').style.display='none';showScr('loginScreen');
+}
+
+function openChangePass(){
+  document.getElementById('cp_new').value='';
+  document.getElementById('cp_confirm').value='';
+  document.getElementById('changePassErr').classList.remove('on');
+  document.getElementById('changePassOv').classList.add('on');
+}
+
+async function doChangePass(){
+  const np=document.getElementById('cp_new').value;
+  const cp=document.getElementById('cp_confirm').value;
+  if(!np||!cp){showErr('changePassErr','يرجى تعبئة جميع الحقول');return}
+  if(np!==cp){showErr('changePassErr','كلمة المرور الجديدة غير متطابقة');return}
+  if(np.length<6){showErr('changePassErr','كلمة المرور يجب أن تكون 6 أحرف على الأقل');return}
+  const{error}=await sb.auth.updateUser({password:np});
+  if(error){showErr('changePassErr',error.message);return}
+  toast('✅ تم تغيير كلمة المرور بنجاح','#059669');
+  closeOv('changePassOv');
+}
+
+function openChangePassLogin(){
+  ['cpl_emp','cpl_old','cpl_new','cpl_confirm'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('changePassLoginErr').classList.remove('on');
+  document.getElementById('changePassLoginOv').classList.add('on');
+}
+
+async function doChangePassLogin(){
+  const emp=document.getElementById('cpl_emp').value.trim();
+  const oldPass=document.getElementById('cpl_old').value;
+  const np=document.getElementById('cpl_new').value;
+  const cp=document.getElementById('cpl_confirm').value;
+  if(!emp||!oldPass||!np||!cp){showErr('changePassLoginErr','يرجى تعبئة جميع الحقول');return}
+  if(emp.length!==6){showErr('changePassLoginErr','الرقم الوظيفي يجب أن يكون 6 خانات');return}
+  if(np!==cp){showErr('changePassLoginErr','كلمة المرور الجديدة غير متطابقة');return}
+  if(np.length<6){showErr('changePassLoginErr','كلمة المرور يجب أن تكون 6 أحرف على الأقل');return}
+  const{data,error}=await sb.auth.signInWithPassword({email:`${emp}@company.local`,password:oldPass});
+  if(error){showErr('changePassLoginErr','الرقم الوظيفي أو كلمة المرور الحالية غير صحيحة');return}
+  const{error:updateError}=await sb.auth.updateUser({password:np});
+  if(updateError){showErr('changePassLoginErr',updateError.message);return}
+  await sb.auth.signOut();
+  closeOv('changePassLoginOv');
+  toast('✅ تم تغيير كلمة المرور، سجّل دخولك من جديد','#059669');
+}
+
+async function startApp(){
+  document.getElementById('app').style.display='block';
+  // فحص أعمدة الجدول مرة واحدة عند البدء
+  try{
+    const {data:cols}=await sb.from('projects').select('*').limit(1);
+    if(cols&&cols.length) console.log('✅ أعمدة projects المتاحة:',Object.keys(cols[0]).join(', '));
+    else console.log('ℹ️ الجدول فارغ — لا يمكن التحقق من الأعمدة');
+  }catch(e){}
+
+  document.getElementById('userName').textContent=currentProfile.name;
+  const rm={general_manager:'مدير عام',dept_manager:'مدير إدارة',contract_manager:'مدير عقد'};
+  const rc={general_manager:'background:#1e40af;color:#fff',dept_manager:'background:#059669;color:#fff',contract_manager:'background:#7c3aed;color:#fff'};
+  document.getElementById('userRole').textContent=rm[currentProfile.role]||'موظف';
+  document.getElementById('userRole').style.cssText=rc[currentProfile.role]||'background:#64748b;color:#fff';
+  buildNav();populateDropdownSelectors();await loadProjects();buildFilterFieldOptions();
+  showPage(1,document.querySelector('.tab'));
+}
+
+function buildNav(){
+  const r=currentProfile.role;
+  const tabs=[{n:1,l:'📊 الملخص التنفيذي'},{n:2,l:'📋 تفاصيل المشاريع'}];
+  tabs.push({n:3,l:'⚙️ إدارة المشاريع'});
+  tabs.push({n:4,l:'🔧 الحقول والقوائم'});
+  if(r==='general_manager')tabs.push({n:5,l:'👥 المستخدمين'});
+  document.getElementById('navTabs').innerHTML=tabs.map((t,i)=>`<button class="tab${i===0?' on':''}" onclick="showPage(${t.n},this)">${t.l}</button>`).join('');
+}
+
+function populateDropdownSelectors(){
+  const bf=getBasicFields();
+  document.getElementById('f_dept').innerHTML='<option value="">-- اختر الإدارة --</option>'+bf.departments.map(d=>`<option value="${d}">${d}</option>`).join('');
+
+  document.getElementById('f_status').innerHTML='<option value="">-- اختر الحالة --</option>'+bf.statuses.map(s=>`<option value="${s.k}">${s.v}</option>`).join('');
+  const uDept=document.getElementById('u_dept');
+  if(uDept)uDept.innerHTML='<option value="">-- حدد الإدارة --</option>'+bf.departments.map(d=>`<option value="${d}">${d}</option>`).join('');
+}
+
+async function loadProjects(){
+  const{data,error}=await sb.from('projects').select('*').order('id');
+  if(error){toast('⚠️ خطأ: '+error.message,'#dc2626');return}
+  allProjects=data||[];
+}
+
+function buildFilterFieldOptions(){
+  const sel=document.getElementById('fil_field');
+  // الأربعة الحقول المطلوبة فقط
+  sel.innerHTML=`<option value="">-- اختر حقل الفلترة --</option>
+    <option value="department">الإدارة</option>
+    <option value="status">الحالة</option>
+    <option value="cf_الجهة_المشرفة">الجهة المشرفة</option>
+    <option value="cf_contract_manager_id">الرقم الوظيفي لمدير العقد</option>`;
+}
+
+function onFilterFieldChange(){
+  const field=document.getElementById('fil_field').value;
+  const wrap=document.getElementById('fil_val_wrap');
+  const inp=document.getElementById('fil_val_input');
+  const lbl=document.getElementById('fil_val_label');
+  if(!field){wrap.style.display='none';return;}
+  wrap.style.display='block';
+  lbl.textContent='القيمة';
+  const bf=getBasicFields();
+
+  if(field==='department'){
+    inp.innerHTML=`<select id="fil_val"><option value="">-- اختر --</option>${bf.departments.map(d=>`<option>${d}</option>`).join('')}</select>`;
+  } else if(field==='status'){
+    inp.innerHTML=`<select id="fil_val"><option value="">-- اختر --</option>${bf.statuses.map(s=>`<option value="${s.k}">${s.v}</option>`).join('')}</select>`;
+  } else if(field==='cf_الجهة_المشرفة'){
+    // جمع القيم الفريدة الموجودة في المشاريع
+    const vals=[...new Set(allProjects.map(p=>getExtraVal(p.extra_fields||{},'الجهة_المشرفة')).filter(v=>v&&v.trim()!==''))].sort();
+    inp.innerHTML=`<select id="fil_val"><option value="">-- اختر --</option>${vals.map(v=>`<option>${v}</option>`).join('')}</select>`;
+  } else if(field==='cf_contract_manager_id'){
+    lbl.textContent='الرقم الوظيفي لمدير العقد';
+    const mgrs=[...new Set(allProjects.map(p=>p.contract_manager_id||'').filter(v=>v.trim()!==''))].sort();
+    inp.innerHTML=`<select id="fil_val"><option value="">-- اختر --</option>${mgrs.map(v=>`<option>${v}</option>`).join('')}</select>`;
+  }
+}
+
+function applyFilter(){
+  const field=document.getElementById('fil_field').value;
+  const valEl=document.getElementById('fil_val');
+  if(!field||!valEl||!valEl.value){toast('⚠️ يرجى اختيار الحقل والقيمة','#dc2626');return;}
+  const val=valEl.value;
+  const bf=getBasicFields();
+  const fieldNames={
+    department:'الإدارة',
+    status:'الحالة',
+    cf_الجهة_المشرفة:'الجهة المشرفة',
+    cf_contract_manager_id:'مدير العقد',
+  };
+  const label=fieldNames[field]||field;
+  activeFilters=activeFilters.filter(f=>f.field!==field);
+  let readableVal=val;
+  if(field==='status'){const m=bf.statuses.find(s=>s.k===val);if(m)readableVal=m.v;}
+  activeFilters.push({field,val,label,readableVal});
+  renderFilterTags();closeOv('filterOv');refreshAllPages();
+}
+
+function removeFilter(field){activeFilters=activeFilters.filter(f=>f.field!==field);renderFilterTags();refreshAllPages();}
+function clearAllFilters(){activeFilters=[];renderFilterTags();refreshAllPages();}
+
+function renderFilterTags(){
+  const container=document.getElementById('filterTags');const clearBtn=document.getElementById('clearFiltersBtn');
+  if(!activeFilters.length){container.innerHTML='<span style="font-size:11px;color:var(--muted)">لا توجد فلاتر نشطة — يتم عرض جميع المشاريع</span>';clearBtn.style.display='none';return}
+  clearBtn.style.display='inline-block';
+  container.innerHTML=activeFilters.map(f=>`<span class="ftag">${f.label}: ${f.readableVal}<span class="ftag-remove" onclick="removeFilter('${f.field}')">✕</span></span>`).join('');
+}
+
+function getMyEmpId(){
+  const raw=currentProfile.emp_id||(currentUser?currentUser.email.replace('@company.local','').replace('@',''):'');
+  return String(raw||'').trim();
+}
+
+// مقارنة أرقام وظيفية متسامحة (تتجاهل المسافات والنوع)
+function sameEmpId(a,b){
+  return String(a||'').trim()===String(b||'').trim() && String(a||'').trim()!=='';
+}
+
+function canEditProject(p){
+  if(!p||!currentProfile) return false;
+  if(currentProfile.role==='general_manager') return true;
+  if(currentProfile.role==='dept_manager') return p.department===currentProfile.department;
+  if(currentProfile.role==='contract_manager') return sameEmpId(p.contract_manager_id,getMyEmpId());
+  return false;
+}
+
+function getFilteredProjects(){
+  let rf=allProjects;
+  if(currentProfile.role==='dept_manager')rf=allProjects.filter(p=>p.department===currentProfile.department);
+  else if(currentProfile.role==='contract_manager'){
+    const empId=getMyEmpId();
+    rf=allProjects.filter(p=>sameEmpId(p.contract_manager_id,empId));
+  }
+  return rf.filter(p=>activeFilters.every(f=>{
+    if(f.field==='department') return p.department===f.val;
+    if(f.field==='status')     return p.status===f.val;
+    if(f.field==='cf_الجهة_المشرفة')
+      return getExtraVal(p.extra_fields||{},'الجهة_المشرفة')===f.val;
+    if(f.field==='cf_contract_manager_id')
+      return (p.contract_manager_id||'')===(f.val||'');
+    return true;
+  }));
+}
+
+function openFilterModal(){
+  document.getElementById('fil_field').value='';document.getElementById('fil_val_wrap').style.display='none';
+  buildFilterFieldOptions();document.getElementById('filterOv').classList.add('on');
+}
+
+function refreshAllPages(){
+  const ap=document.querySelector('.page.on')?.id;
+  if(ap==='page1')buildPage1();if(ap==='page2')buildPage2();if(ap==='page3')buildMgmt();
+}
+
+function getUniqueProjects(ps){
+  const seen=new Set();
+  const unique=[];
+
+  ps.forEach(p=>{
+    // أولاً: جرّب كود المشروع
+    const parentId=getExtraVal(p.extra_fields,'كود_المشروع');
+
+    if(parentId && parentId!==''){
+      // مجمّع برقم الأب
+      if(!seen.has('pid:'+parentId)){
+        seen.add('pid:'+parentId);
+        const group=ps.filter(x=>getExtraVal(x.extra_fields,'كود_المشروع')===parentId);
+        const rep=_mergeGroup(p,group);
+        unique.push(rep);
+      }
+    } else {
+      // احتياطي: جمّع بالاسم (لو ما في رقم أب — مشاريع مستوردة قديمة)
+      const nameKey='name:'+p.name_ar.trim();
+      if(!seen.has(nameKey)){
+        seen.add(nameKey);
+        const group=ps.filter(x=>
+          !getExtraVal(x.extra_fields,'كود_المشروع') &&
+          x.name_ar.trim()===p.name_ar.trim()
+        );
+        const rep=group.length>1 ? _mergeGroup(p,group) : p;
+        unique.push(rep);
+      }
+    }
+  });
+  return unique;
+}
+
+// دالة مساعدة: دمج مجموعة عقود في مشروع واحد
+function _mergeGroup(rep, group){
+  const merged={...rep,
+    budget:   group.reduce((a,x)=>a+(+x.budget||0),0),
+    vo_amount: group.reduce((a,x)=>a+(+x.vo_amount||0),0),
+    revised_value: group.reduce((a,x)=>a+(+x.revised_value||0),0),
+    approved: group.reduce((a,x)=>a+(+x.approved||0),0),
+    spent:    group.reduce((a,x)=>a+(+x.spent||0),0),
+    progress: Math.round(group.reduce((a,x)=>a+(+x.progress||0),0)/group.length),
+    planned_progress: Math.round(group.reduce((a,x)=>a+(+x.planned_progress||0),0)/group.length),
+    delay_days: Math.max(...group.map(x=>getDelayDays(x))),
+    _contractorsCount: group.length,
+    _contractors: group.map(x=>x.contractor).filter(Boolean),
+  };
+  // المشروع متأخر لو أي عقد متأخر
+  if(group.some(x=>x.status==='OVERDUE')) merged.status='OVERDUE';
+  else if(group.some(x=>x.status==='CLOSING')) merged.status='CLOSING';
+  // extra_fields: خذ تباين العقد الأسوأ (الأكثر تأخيراً = الأكبر سلبياً)
+  const worstTabayun=group
+    .map(x=>parseFloat(getExtraVal(x.extra_fields,'تباين_العقد'))||0)
+    .reduce((a,v)=>v<a?v:a, 0);
+  merged.extra_fields={...rep.extra_fields, تباين_العقد: String(worstTabayun)};
+  return merged;
+}
+
+
+
+function buildPage1(){
+  const ps=getFilteredProjects();const r=currentProfile.role;
+  const uPs=getUniqueProjects(ps);
+  document.getElementById('p1sub').textContent=activeFilters.length
+    ?`فلترة نشطة — ${uPs.length} مشروع (${ps.length} عقد)`
+    :r==='general_manager'?'عرض شامل لكافة الإدارات'
+    :r==='dept_manager'?`إدارة ${currentProfile.department}`
+    :'مشاريعك تحت إشرافك';
+  document.getElementById('dateStamp').textContent=new Date().toLocaleDateString('ar-SA',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+  if(!uPs.length){
+    document.getElementById('kpiRow').innerHTML='<div style="grid-column:1/-1;text-align:center;padding:45px;color:var(--muted);font-weight:600">لا توجد مشاريع ضمن نطاق التصفية</div>';
+    document.getElementById('alertBox').innerHTML='';
+    return;
+  }
+
+  const bf=getBasicFields();
+  const total=uPs.length;
+  const budget=uPs.reduce((a,p)=>a+(+p.budget||0),0);
+  const voAmount=uPs.reduce((a,p)=>a+(+p.vo_amount||0),0);
+  const revisedValue=uPs.reduce((a,p)=>a+(+p.revised_value||0),0);
+  const approved=uPs.reduce((a,p)=>a+(+p.approved||0),0);
+  const spent=uPs.reduce((a,p)=>a+(+p.spent||0),0);
+  const remain=Math.max(0,budget-spent);
+  const spentPct=budget?Math.round(spent/budget*100):0;
+  const approvedPct=budget?Math.round(approved/budget*100):0;
+  const spentOfApprovedPct=approved?Math.round(spent/approved*100):0;
+  const avgPlanned=Math.round(uPs.reduce((a,p)=>a+(+p.planned_progress||0),0)/total);
+  const overdue=uPs.filter(p=>p.status==='OVERDUE');
+  const ongoing=uPs.filter(p=>p.status==='ONGOING');
+  const closing=uPs.filter(p=>p.status==='CLOSING');
+  const avgP=Math.round(uPs.reduce((a,p)=>a+(+p.progress||0),0)/total);
+  const totalDelay=uPs.reduce((a,p)=>a+getDelayDays(p),0);
+  const delayedProjects=uPs.filter(p=>getDelayDays(p)>0);
+  const avgDelayPct=delayedProjects.filter(p=>getDelayPct(p)>0).length
+    ?Math.round(delayedProjects.filter(p=>getDelayPct(p)>0).reduce((a,p)=>a+getDelayPct(p),0)/delayedProjects.filter(p=>getDelayPct(p)>0).length)
+    :0;
+
+  // ── KPI Cards ──
+  const kpis=[
+    {c:'#1e40af',ico:'🏗',v:total,l:'إجمالي المشاريع',s:`${ps.length} عقد`},
+    {c:'#0891b2',ico:'💰',v:fmt(budget),l:'الميزانية الإجمالية',s:'مليون ريال'},
+    {c:'#d97706',ico:'✅',v:fmt(approved),l:'إجمالي المعتمد',s:`${approvedPct}% من الميزانية`},
+    {c:'#059669',ico:'📤',v:fmt(spent),l:'إجمالي المصروف',s:`${spentPct}% من الميزانية`},
+    {c:'#7c3aed',ico:'📈',v:avgP+'%',l:'متوسط الإنجاز الفعلي',s:`المخطط ${avgPlanned}%`},
+    {c:'#0ea5e9',ico:'🔄',v:fmt(voAmount),l:'قيمة أوامر التغيير',s:`قيمة العقد بعد التغيير: ${fmt(revisedValue)}`},
+    {c:'#dc2626',ico:'⚠️',v:overdue.length,l:'مشاريع متأخرة',
+      s:overdue.length?`${ps.filter(p=>p.status==='OVERDUE').length} عقد متأخر`:'لا تأخيرات'},
+    {c:'#059669',ico:'✅',v:Math.round((uPs.filter(p=>getDelayDays(p)===0).length/total)*100)+'%',l:'نسبة المشاريع المنتظمة',
+      s:`${uPs.filter(p=>getDelayDays(p)===0).length} من أصل ${total} مشروع`},
+
+  ];
+  document.getElementById('kpiRow').innerHTML=kpis.map(k=>`
+    <div class="kpi" style="border-color:${k.c}">
+      <div style="font-size:20px;margin-bottom:6px">${k.ico}</div>
+      <div style="font-size:22px;font-weight:900;color:${k.c};letter-spacing:-1px">${k.v}</div>
+      <div style="font-size:12px;font-weight:700;color:var(--navy);margin-top:2px">${k.l}</div>
+      <div style="font-size:10px;color:#94a3b8;margin-top:3px">${k.s}</div>
+    </div>`).join('');
+
+  // ── نسبة المعتمد والمصروف حسب الإدارة (مقارنة) ──
+  const activeDepts=bf.departments.filter(d=>uPs.some(p=>p.department===d));
+  const deptApprovedPct=activeDepts.map(d=>{
+    const dps=uPs.filter(p=>p.department===d);
+    const b=dps.reduce((a,p)=>a+(+p.budget||0),0);
+    const ap=dps.reduce((a,p)=>a+(+p.approved||0),0);
+    return b?Math.round(ap/b*100):0;
+  });
+  const deptSpentPct=activeDepts.map(d=>{
+    const dps=uPs.filter(p=>p.department===d);
+    const b=dps.reduce((a,p)=>a+(+p.budget||0),0);
+    const s=dps.reduce((a,p)=>a+(+p.spent||0),0);
+    return b?Math.round(s/b*100):0;
+  });
+  if(deptCh)deptCh.destroy();
+  deptCh=new Chart(document.getElementById('deptChart'),{type:'bar',data:{
+    labels:activeDepts,
+    datasets:[
+      {label:'المعتمد ÷ الميزانية %',data:deptApprovedPct,backgroundColor:'#d97706cc',borderColor:'#d97706',borderWidth:2,borderRadius:6},
+      {label:'المصروف ÷ الميزانية %',data:deptSpentPct,backgroundColor:'#1e40afcc',borderColor:'#1e40af',borderWidth:2,borderRadius:6}
+    ]
+  },options:{indexAxis:'y',responsive:true,plugins:{
+    legend:{display:true,position:'top',labels:{font:{family:'Tajawal',size:10},boxWidth:12,padding:8}},
+    tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${ctx.raw}%`}}
+  },scales:{
+    x:{min:0,max:100,grid:{color:'#f1f5f9'},ticks:{callback:v=>v+'%',font:{family:'Tajawal',size:10}}},
+    y:{grid:{display:false},ticks:{font:{family:'Tajawal',size:12,weight:'700'}}}
+  }}});
+  // ملخص تفصيلي لكل إدارة
+  document.getElementById('deptChartLegend').innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:8px;margin-top:4px">
+    ${activeDepts.map((d,i)=>{
+      const dps=uPs.filter(p=>p.department===d);
+      const b=dps.reduce((a,p)=>a+(+p.budget||0),0);
+      const s=dps.reduce((a,p)=>a+(+p.spent||0),0);
+      const ov=dps.filter(p=>p.status==='OVERDUE').length;
+      const pct=deptSpentPct[i];
+      const dc=getDeptColor(d);
+      return`<div style="background:var(--bg);border-radius:10px;padding:10px;border-right:3px solid ${dc}">
+        <div style="font-size:11px;font-weight:800;color:${dc};margin-bottom:6px">${d}</div>
+        <div style="font-size:10px;color:var(--muted)">${dps.length} مشروع · ${ov>0?`<span style="color:#dc2626;font-weight:700">${ov} متأخر</span>`:'<span style="color:#059669">لا تأخير</span>'}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:3px">ميزانية: ${fmt(b)}</div>
+        <div style="font-size:12px;font-weight:900;color:${pct>=90?'#dc2626':pct>=70?'#d97706':'#059669'};margin-top:2px">${pct}% منصرف</div>
+      </div>`;
+    }).join('')}
+    </div>`;
+
+  // ── دونات: المعتمد vs المصروف vs المتبقي من الميزانية ──
+  if(donutCh)donutCh.destroy();
+  const remainApproved=Math.max(0,budget-approved); // غير المعتمد بعد من الميزانية
+  donutCh=new Chart(document.getElementById('donutChart'),{type:'doughnut',data:{
+    labels:['المصروف','معتمد غير مصروف','غير معتمد'],
+    datasets:[{
+      data:[spent||0, Math.max(0,approved-spent), remainApproved||0],
+      backgroundColor:['#1e40af','#d97706','#e2e8f0'],borderWidth:0,hoverOffset:6
+    }]
+  },options:{responsive:true,cutout:'70%',plugins:{
+    legend:{display:false},
+    tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${fmt(ctx.raw)} مليون`}}
+  }}});
+  document.getElementById('donutLegend').innerHTML=`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+      ${[
+        {l:'الميزانية (قيمة العقد)',v:fmt(budget),c:'#64748b'},
+        {l:'أوامر التغيير',v:fmt(voAmount),c:'#0ea5e9'},
+        {l:'قيمة العقد بعد التغيير',v:fmt(revisedValue),c:'#0891b2'},
+        {l:'المعتمد',v:fmt(approved),c:'#d97706'},
+        {l:'المصروف',v:fmt(spent),c:'#1e40af'},
+        {l:'المتبقي من الميزانية',v:fmt(remain),c:'#059669'},
+        {l:'المعتمد ÷ الميزانية',v:approvedPct+'%',c:approvedPct>90?'#dc2626':approvedPct>70?'#d97706':'#059669'},
+        {l:'المصروف ÷ المعتمد',v:spentOfApprovedPct+'%',c:spentOfApprovedPct>90?'#dc2626':spentOfApprovedPct>70?'#d97706':'#059669'}
+      ]
+      .map(x=>`<div style="background:var(--bg);border-radius:9px;padding:8px 10px"><div style="font-size:10px;color:var(--muted)">${x.l}</div><div style="font-size:14px;font-weight:900;color:${x.c}">${x.v}</div></div>`).join('')}
+    </div>`;
+
+  // ── أشرطة الإنجاز حسب الإدارة (الفعلي مقابل المخطط) ──
+  document.getElementById('deptProgressBars').innerHTML=activeDepts.map(d=>{
+    const dps=uPs.filter(p=>p.department===d);
+    if(!dps.length)return'';
+    const avg=Math.round(dps.reduce((a,p)=>a+(+p.progress||0),0)/dps.length);
+    const avgPlan=Math.round(dps.reduce((a,p)=>a+(+p.planned_progress||0),0)/dps.length);
+    const variance=avg-avgPlan; // موجب = متقدّم، سالب = متأخر
+    const clr=avg>=80?'#059669':avg>=50?'#d97706':'#dc2626';
+    const dc=getDeptColor(d);
+    const vClr=variance>=0?'#059669':'#dc2626';
+    const vTxt=variance>=0?`+${variance}%`:`${variance}%`;
+    return`<div style="margin-bottom:16px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <span style="width:10px;height:10px;border-radius:50%;background:${dc};display:inline-block;flex-shrink:0"></span>
+          <span style="font-size:12px;font-weight:800;color:var(--navy)">${d}</span>
+          <span style="font-size:10px;color:var(--muted)">${dps.length} مشروع</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-size:10px;color:var(--muted)">مخطط ${avgPlan}%</span>
+          <span style="font-size:13px;font-weight:900;color:${clr}">${avg}%</span>
+          <span style="font-size:10px;font-weight:800;color:${vClr};background:${vClr}1a;padding:1px 6px;border-radius:10px">${vTxt}</span>
+        </div>
+      </div>
+      <div style="position:relative;background:#e2e8f0;border-radius:6px;height:10px;overflow:hidden">
+        <!-- شريط المخطط (خلفية فاتحة) -->
+        <div style="position:absolute;inset:0;width:${avgPlan}%;height:100%;background:#cbd5e1;border-radius:6px"></div>
+        <!-- شريط الفعلي (ملوّن) -->
+        <div style="position:absolute;inset:0;width:${avg}%;height:100%;border-radius:6px;background:linear-gradient(90deg,${dc},${clr});transition:width .8s"></div>
+      </div>
+    </div>`;
+  }).join('');
+
+  // ── توزيع الحالات ──
+  const statusData=[
+    {l:'جارٍ',v:ongoing.length,c:'#059669'},
+    {l:'متأخر',v:overdue.length,c:'#dc2626'},
+    {l:'إغلاق',v:closing.length,c:'#d97706'},
+  ].filter(x=>x.v>0);
+  if(statusCh)statusCh.destroy();
+  statusCh=new Chart(document.getElementById('statusChart'),{type:'doughnut',data:{
+    labels:statusData.map(x=>x.l),
+    datasets:[{data:statusData.map(x=>x.v),backgroundColor:statusData.map(x=>x.c),borderWidth:0,hoverOffset:6}]
+  },options:{responsive:true,cutout:'60%',plugins:{
+    legend:{position:'bottom',labels:{font:{family:'Tajawal',size:11},boxWidth:12,padding:12}},
+    tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${ctx.raw} مشروع (${Math.round(ctx.raw/total*100)}%)`}}
+  }}});
+
+  // ── أعلى 5 تأخيراً ──
+  const delayed=uPs.filter(p=>getDelayDays(p)>0).sort((a,b)=>getDelayPct(b)-getDelayPct(a)).slice(0,5);
+  const tbody=document.getElementById('topDelayedBody');
+  const sec=document.getElementById('topDelayedSection');
+  if(!delayed.length){
+    tbody.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--muted);padding:20px;font-size:12px">✅ لا توجد مشاريع متأخرة</td></tr>';
+  }else{
+    tbody.innerHTML=delayed.map((p,i)=>{
+      const dc2=getDeptColor(p.department);
+      const pc=p.progress>=80?'#059669':p.progress>=50?'#d97706':'#dc2626';
+      const delayPct=getDelayPct(p);
+      const delayDays=getDelayDays(p);
+      const pctColor=getDelayPctColor(delayPct);
+      return`<tr>
+        <td style="font-size:13px;text-align:center;font-weight:800;color:var(--muted)">${i+1}</td>
+        <td style="font-weight:700;color:var(--navy);font-size:12px">${p.name_ar}</td>
+        <td><span style="background:${dc2}22;color:${dc2};padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700">${p.department}</span></td>
+        <td style="font-size:11px;font-weight:700;color:var(--muted)">${delayDays.toLocaleString()} يوم</td>
+        <td><span style="background:${pctColor}22;color:${pctColor};padding:2px 10px;border-radius:20px;font-size:12px;font-weight:900">${delayPct}%</span></td>
+        <td><div style="display:flex;align-items:center;gap:5px">
+          <div style="flex:1;background:#e2e8f0;border-radius:3px;height:5px;min-width:45px"><div style="width:${p.progress}%;height:100%;border-radius:3px;background:${pc}"></div></div>
+          <span style="font-size:10px;font-weight:700;color:${pc}">${p.progress}%</span>
+        </div></td>
+      </tr>`;
+    }).join('');
+  }
+
+  // ── أكبر 5 ميزانيةً ──
+  const topBudget=[...uPs].sort((a,b)=>(+b.budget||0)-(+a.budget||0)).slice(0,5);
+  document.getElementById('topBudgetBody').innerHTML=topBudget.map((p,i)=>{
+    const dc2=getDeptColor(p.department);
+    const pc=p.progress>=80?'#059669':p.progress>=50?'#d97706':'#dc2626';
+    const spPct=p.budget?Math.round((+p.spent||0)/(+p.budget||1)*100):0;
+    return`<tr>
+      <td style="font-size:13px;text-align:center;font-weight:800;color:var(--muted)">${i+1}</td>
+      <td style="font-weight:700;color:var(--navy);font-size:12px">${p.name_ar}</td>
+      <td><span style="background:${dc2}22;color:${dc2};padding:2px 8px;border-radius:20px;font-size:10px;font-weight:700">${p.department}</span></td>
+      <td style="font-weight:800;color:var(--navy)">${fmt(p.budget)}
+        <span style="font-size:10px;color:var(--muted);font-weight:500"> · ${spPct}% منصرف</span></td>
+      <td><div style="display:flex;align-items:center;gap:5px">
+        <div style="flex:1;background:#e2e8f0;border-radius:3px;height:5px;min-width:45px"><div style="width:${p.progress}%;height:100%;border-radius:3px;background:${pc}"></div></div>
+        <span style="font-size:10px;font-weight:700;color:${pc}">${p.progress}%</span>
+      </div></td>
+    </tr>`;
+  }).join('');
+
+  // ── تنبيهات ──
+  const ab=document.getElementById('alertBox');
+  if(overdue.length){
+    ab.style.cssText='background:#fff5f5;border-color:#fca5a5';
+    ab.innerHTML=`<div style="font-size:22px">🚨</div><div style="flex:1"><div style="font-weight:800;color:var(--red);font-size:13px;margin-bottom:8px">تنبيه: ${overdue.length} مشروع يستوجب المتابعة الفورية</div><div style="display:flex;flex-wrap:wrap;gap:6px">${overdue.map(p=>`<span style="background:#fee2e2;color:#991b1b;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:600">${p.name_ar}${getDelayDays(p)?' · '+getDelayDays(p)+' يوم':''}</span>`).join('')}</div></div>`;
+  }else{
+    ab.style.cssText='background:linear-gradient(135deg,#f0fdf4,#dcfce7);border-color:#86efac';
+    ab.innerHTML='<div style="font-size:22px">✅</div><div><div style="font-weight:800;color:#065f46;font-size:13px">كافة المشاريع تسير وفق الجدول الزمني المحدد</div><div style="font-size:11px;color:#059669;margin-top:4px">لا توجد تأخيرات مسجلة — أداء ممتاز</div></div>';
+  }
+}
+
+// بيانات الجدول للبحث
+let p2Data=[];
+
+function buildPage2(){
+  const ps=getFilteredProjects();
+  const bf=getBasicFields();
+  p2Data=ps;
+  document.getElementById('p2sub').textContent=
+    activeFilters.length?`فلترة نشطة — ${ps.length} مشروع`:'عرض جميع المشاريع';
+  document.getElementById('tblCnt').textContent=ps.length+' مشروع';
+  renderP2Table(ps);
+}
+
+function renderP2Table(ps){
+  const bf=getBasicFields();
+  document.getElementById('p2Tbl').innerHTML=ps.map(p=>{
+    const pc=p.progress>=80?'#059669':p.progress>=50?'#d97706':'#dc2626';
+    const ms=bf.statuses.find(s=>s.k===p.status);
+    const rs=ms?ms.v:p.status;
+    const dc=getDeptColor(p.department);
+    const delay=getDelayDays(p);
+    const spentPct=p.budget?Math.round((+p.spent||0)/(+p.budget||1)*100):0;
+
+    // لون الحالة
+    const statusStyle=p.status==='OVERDUE'
+      ?'background:#fee2e2;color:#991b1b'
+      :p.status==='CLOSING'
+      ?'background:#fef3c7;color:#92400e'
+      :'background:#d1fae5;color:#065f46';
+    const statusIcon=p.status==='OVERDUE'?'⚠️':p.status==='CLOSING'?'🔄':'✓';
+
+    return`<tr style="cursor:pointer" onclick="showDetail(${p.id})">
+      <td>
+        <div style="font-weight:800;color:var(--navy);font-size:13px;line-height:1.4">${p.name_ar}</div>
+        ${p._contractorsCount>1?`<div style="font-size:10px;color:var(--muted);margin-top:2px">👥 ${p._contractorsCount} متعاقدين</div>`:''}
+      </td>
+      <td><span style="background:${dc}22;color:${dc};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">${p.department}</span></td>
+      <td style="font-size:12px;color:var(--muted);max-width:140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${p.contractor||'—'}</td>
+      <td>
+        <div style="font-weight:800;color:var(--navy);font-size:13px">${fmt(p.budget)}</div>
+        <div style="font-size:10px;color:${spentPct>90?'#dc2626':'#64748b'}">${spentPct}% منصرف</div>
+      </td>
+      <td style="min-width:100px">
+        <div style="display:flex;align-items:center;gap:6px">
+          <div style="flex:1;background:#e2e8f0;border-radius:4px;height:7px;overflow:hidden">
+            <div style="width:${p.progress}%;height:100%;border-radius:4px;background:${pc};transition:width .6s"></div>
+          </div>
+          <span style="font-size:12px;font-weight:900;color:${pc};min-width:32px">${p.progress}%</span>
+        </div>
+      </td>
+      <td><span style="${statusStyle};padding:4px 10px;border-radius:20px;font-size:11px;font-weight:700">${statusIcon} ${rs}</span></td>
+      <td style="text-align:center">
+        ${delay>0
+          ?`<span style="background:#fee2e2;color:#dc2626;padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">⏱ ${delay.toLocaleString()} يوم</span>`
+          :'<span style="color:#059669;font-size:13px">—</span>'}
+      </td>
+      <td><button class="btn btn-gray btn-sm" onclick="event.stopPropagation();showDetail(${p.id})">👁️</button></td>
+    </tr>`;
+  }).join('')||'<tr><td colspan="8" style="text-align:center;color:var(--muted);padding:50px;font-size:13px">لا توجد مشاريع ضمن هذه الفلترة</td></tr>';
+}
+
+function filterP2Table(){
+  const q=document.getElementById('p2Search').value.trim().toLowerCase();
+  if(!q){renderP2Table(p2Data);document.getElementById('tblCnt').textContent=p2Data.length+' مشروع';return;}
+  const filtered=p2Data.filter(p=>
+    p.name_ar.toLowerCase().includes(q)||
+    (p.department||'').toLowerCase().includes(q)||
+    (p.contractor||'').toLowerCase().includes(q)
+  );
+  renderP2Table(filtered);
+  document.getElementById('tblCnt').textContent=filtered.length+' من '+p2Data.length;
+}
+
+function buildMgmt(){
+  const ps=getFilteredProjects();const bf=getBasicFields();
+  document.getElementById('mgmtCnt').textContent=ps.length+' مشروع';
+  document.getElementById('mgmtTbl').innerHTML=ps.map((p,i)=>{
+    const pc=p.progress>=80?'#10b981':p.progress>=50?'#d97706':'#dc2626';
+    const ms=bf.statuses.find(s=>s.k===p.status);const rs=ms?ms.v:p.status;
+    const canEdit=canEditProject(p);
+    return`<tr><td style="color:var(--muted);font-weight:700">${i+1}</td>
+      <td style="font-weight:700;color:var(--navy)">${p.name_ar}</td>
+      <td><span class="db" style="background:${getDeptColor(p.department)}22;color:${getDeptColor(p.department)}">${p.department}</span></td>
+      <td><div class="mb"><div class="mbt"><div class="mbf" style="width:${p.progress}%;background:${pc}"></div></div><span class="mbp" style="color:${pc}">${p.progress}%</span></div></td>
+      <td style="font-weight:700">${fmt(p.budget)}</td>
+      <td><span class="${p.status==='OVERDUE'?'bad':'ok'}">${p.status==='OVERDUE'?'⚠ '+rs:'✓ '+rs}</span></td>
+      <td><div style="display:flex;gap:4px">${canEdit?`<button class="btn btn-gray btn-sm" onclick="editProject(${p.id})">✏️ تعديل</button><button class="btn btn-red btn-sm" onclick="deletePrj(${p.id},'${p.name_ar.replace(/'/g,"\\'")}')">🗑️</button>`:'<span style="color:var(--muted);font-size:11px">للقراءة فقط</span>'}</div></td></tr>`;
+  }).join('');
+  renderDynamicProjectForm();renderCustomFieldsForm();
+}
+
+function editProject(id){
+  const p=allProjects.find(x=>x.id===id);
+  if(!p){toast('⚠️ المشروع غير موجود','#dc2626');return}
+  if(!canEditProject(p)){toast('⚠️ لا تملك صلاحية تعديل هذا المشروع','#dc2626');return}
+  showForm();
+  document.getElementById('formTitle').textContent='✏️ تعديل: '+p.name_ar;
+  document.getElementById('f_id').value=p.id;document.getElementById('f_dept').value=p.department;
+  document.getElementById('f_status').value=p.status;
+  const cmEl=document.getElementById('f_contract_mgr');if(cmEl)cmEl.value=p.contract_manager_id||'';
+  renderDynamicProjectForm();
+  const fm={name_ar:p.name_ar,budget:p.budget||0,vo_amount:p.vo_amount||0,revised_value:p.revised_value||0,approved:p.approved||0,spent:p.spent||0,progress:p.progress||0,planned_progress:p.planned_progress||0,project_status:p.project_status||'',pac_status:p.pac_status||'',fac_status:p.fac_status||'',delay_days:getDelayDays(p),po_number:p.po_number||'',contractor:p.contractor||''};
+  getProjectFields().filter(f=>f.visible).forEach(f=>{const el=document.getElementById('f_'+f.key);if(el)el.value=fm[f.key]??'';});
+  // ✅ إصلاح: تمرير extra_fields للنموذج
+  renderCustomFieldsForm(p.extra_fields||{});
+  document.querySelector('.mgmt-form').scrollIntoView({behavior:'smooth'});
+}
+
+function showForm(){
+  document.getElementById('mgmtForm').style.display='block';
+  document.getElementById('mgmtForm').scrollIntoView({behavior:'smooth',block:'nearest'});
+}
+function hideForm(){
+  document.getElementById('mgmtForm').style.display='none';
+  ['f_id','f_dept','f_status','f_contract_mgr'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('formTitle').textContent='➕ إضافة مشروع جديد';
+  renderDynamicProjectForm();renderCustomFieldsForm();
+}
+function clearForm(){
+  showForm();
+  ['f_id','f_dept','f_status','f_contract_mgr'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+  document.getElementById('formTitle').textContent='➕ إضافة مشروع جديد';
+  renderDynamicProjectForm();renderCustomFieldsForm();
+}
+
+// ✅ إصلاح: استخدام getExtraVal في نموذج التعديل
+// الحقول التي تُعرض كقائمة منسدلة من البيانات الموجودة في allProjects
+const DROPDOWN_FIELDS={
+  'cf_الجهة_المشرفة':   p=>getExtraVal(p.extra_fields||{},'الجهة_المشرفة'),
+};
+
+function renderCustomFieldsForm(vals={}){
+  const cfs=getCFs();
+  document.getElementById('customFieldsForm').innerHTML=cfs.map(f=>{
+    const val=getExtraVal(vals,f.key);
+    // حقل يُعرض كقائمة منسدلة من البيانات الموجودة
+    if(DROPDOWN_FIELDS[f.key]){
+      const opts=[...new Set(allProjects.map(DROPDOWN_FIELDS[f.key]).filter(v=>v&&v.trim()!==''))].sort();
+      return `<div class="fg"><label>${f.label}</label>
+        <select id="cf_${f.key}">
+          <option value="">-- اختر --</option>
+          ${opts.map(o=>`<option ${val===o?'selected':''}>${o}</option>`).join('')}
+        </select></div>`;
+    }
+    // حقل select عادي بخيارات محددة مسبقاً
+    if(f.type==='select'){
+      return `<div class="fg"><label>${f.label}</label>
+        <select id="cf_${f.key}">
+          <option value="">-- اختر --</option>
+          ${f.options.map(o=>`<option ${val===o?'selected':''}>${o}</option>`).join('')}
+        </select></div>`;
+    }
+    // باقي الحقول (نص، رقم، تاريخ)
+    return `<div class="fg"><label>${f.label}${f.type==='percent'?' (%)':''}</label>
+      <input type="${f.type==='percent'?'number':f.type}" id="cf_${f.key}" value="${val}" ${f.type==='percent'?'min="0" max="100"':''}></div>`;
+  }).join('');
+}
+
+function getCustomFieldValues(){
+  const cfs=getCFs(),vals={};
+  cfs.forEach(f=>{
+    const el=document.getElementById('cf_'+f.key);
+    if(el){
+      // احفظ بدون cf_ ليتوافق مع البيانات المستوردة
+      const rawKey=f.key.replace(/^cf_/,'');
+      vals[rawKey]=el.value;
+      vals[f.key]=el.value;
+    }
+  });
+  return vals;
+}
+
+// ── دالة تُضيف _updated_at و_updated_by لأي extra_fields ──
+function stampEdit(extraFields){
+  const empId=getMyEmpId()||'—';
+  const now=new Date().toLocaleString('ar-SA',{
+    year:'numeric',month:'2-digit',day:'2-digit',
+    hour:'2-digit',minute:'2-digit',hour12:false
+  });
+  return{...extraFields, _updated_by:empId, _updated_at:now};
+}
+
+// ── قراءة بيانات التعديل من extra_fields ──
+function getEditStamp(p){
+  const ex=p.extra_fields||{};
+  return{
+    by: ex._updated_by||'—',
+    at: ex._updated_at||'—',
+  };
+}
+
+async function saveProject(){
+  const pfs=getProjectFields();const dept=document.getElementById('f_dept').value;const status=document.getElementById('f_status').value;
+  const dynVals={};pfs.filter(f=>f.visible).forEach(f=>{const el=document.getElementById('f_'+f.key);if(el)dynVals[f.key]=el.value;});
+  const name=(dynVals['name_ar']||'').trim();const missing=pfs.filter(f=>f.visible&&f.required&&!dynVals[f.key]);
+  if(!name||!dept||!status||missing.length){toast('⚠️ يرجى تعبئة الحقول الإلزامية *','#dc2626');return}
+  const empId=getMyEmpId();
+  const cfVals=stampEdit(getCustomFieldValues()); // ✅ يُضيف _updated_by و_updated_at
+  const obj={
+    name_ar:name, department:dept,
+    
+    budget:parseFloat(dynVals['budget'])||0,
+    vo_amount:parseFloat(dynVals['vo_amount'])||0,
+    revised_value:parseFloat(dynVals['revised_value'])||0,
+    approved:parseFloat(dynVals['approved'])||0,
+    spent:parseFloat(dynVals['spent'])||0,
+    progress:parseInt(dynVals['progress'])||0,
+    planned_progress:parseInt(dynVals['planned_progress'])||0,
+    project_status:(dynVals['project_status']||'').trim()||null,
+    pac_status:(dynVals['pac_status']||'').trim()||null,
+    fac_status:(dynVals['fac_status']||'').trim()||null,
+    status, delay_days:0,
+    po_number:(dynVals['po_number']||'').trim()||null,
+    contractor:(dynVals['contractor']||'').trim()||null,
+    manager_id:currentProfile.id,
+    contract_manager_id:document.getElementById('f_contract_mgr').value.trim()||null,
+    extra_fields:cfVals,
+  };
+  const id=document.getElementById('f_id').value;
+  const{error}=id?await sb.from('projects').update(obj).eq('id',parseInt(id)):await sb.from('projects').insert(obj);
+  if(error){toast('⚠️ خطأ: '+error.message,'#dc2626');return}
+  toast(id?'✅ تم تحديث المشروع':'✅ تم إضافة المشروع','#059669');
+  hideForm();await loadProjects();buildMgmt();
+}
+
+function deletePrj(id,name){
+  const p=allProjects.find(x=>x.id===id);
+  if(!canEditProject(p)){toast('⚠️ لا تملك صلاحية حذف هذا المشروع','#dc2626');return}
+  pendingDel=id;pendingDelType='project';document.getElementById('delMsg').textContent=`حذف مشروع "${name}"؟`;document.getElementById('delOv').classList.add('on');}
+
+async function confirmDel(){
+  if(pendingDelType==='project'){
+    const{error}=await sb.from('projects').delete().eq('id',pendingDel);
+    if(error){toast('⚠️ تعذر الحذف','#dc2626');return}
+    await loadProjects();buildMgmt();
+  }else if(pendingDelType==='field'){
+    saveCFs(getCFs().filter(f=>f.key!==pendingDel));buildCFPage();renderCustomFieldsForm();buildFilterFieldOptions();
+  }else if(pendingDelType==='user'){
+    await sb.from('profiles').delete().eq('id',pendingDel);
+    const sbUrl=getSBUrl();
+    const res=await fetch(`${sbUrl}/functions/v1/manage-user`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+getSBKey()},body:JSON.stringify({action:'delete',userId:pendingDel})});
+    const result=await res.json();
+    if(result.error)toast('⚠️ تم حذف البيانات لكن تعذر حذف حساب المصادقة','#d97706');
+    buildUsers();
+  }
+  closeOv('delOv');toast('🗑️ تم الحذف','#64748b');pendingDel=null;
+}
+
+function getProjectFields(){const bf=getBasicFields();return bf.projectFields||DEFAULT_BASIC_FIELDS.projectFields;}
+function saveProjectFields(pf){const bf=getBasicFields();bf.projectFields=pf;saveBasicFields(bf);}
+
+
+// ── إخفاء/إظهار الحقول ──
+function getHiddenFields(){return JSON.parse(localStorage.getItem('hiddenFields')||'[]');}
+function saveHiddenFields(h){localStorage.setItem('hiddenFields',JSON.stringify(h));}
+function toggleFieldVisibility(key){
+  const h=getHiddenFields();
+  const idx=h.indexOf(key);
+  if(idx>=0) h.splice(idx,1); else h.push(key);
+  saveHiddenFields(h);
+  buildCFPage();
+  buildFilterFieldOptions();
+  toast((idx>=0?'👁 إظهار':'🙈 إخفاء')+' الحقل','#64748b');
+}
+function isFieldHidden(key){return getHiddenFields().includes(key);}
+
+function buildCFPage(){
+  const bf=getBasicFields();
+  const tn={text:'نص',number:'رقم',percent:'نسبة %',date:'تاريخ',select:'قائمة'};
+
+  // ── القوائم الأساسية ──
+  document.getElementById('basicFieldsList').innerHTML=`
+    <div class="cf-item">
+      <span class="cf-label">🏢 الإدارات</span>
+      <span class="cf-type">${bf.departments.join(' · ')}</span>
+      <button class="btn btn-gray btn-sm" onclick="openBasicFieldEdit('departments','الإدارات')">✏️ تعديل</button>
+    </div>
+    <div class="cf-item">
+      <span class="cf-label">🔄 حالات العقد</span>
+      <span class="cf-type">${bf.statuses.map(s=>s.v).join(' · ')}</span>
+      <span style="font-size:10px;color:var(--muted);margin-right:4px">(ثابتة من Excel)</span>
+    </div>`;
+
+  // ── الحقول الكاملة: أساسية + extra_fields مجمعة ──
+  const cfs=getCFs();
+  const excelKeys=new Set(Object.keys(EXTRA_FIELDS_DEF).map(k=>'cf_'+k));
+
+  // حقول المشروع الأساسية (مخزنة مباشرة في جدول projects)
+  const coreFields=[
+    {key:'name_ar',       label:'اسم المشروع',                  type:'text',   src:'excel', required:true},
+    {key:'department',    label:'الإدارة',                      type:'select', src:'excel', required:true},
+    {key:'po_number',     label:'رقم أمر الشراء',               type:'text',   src:'excel', required:false},
+    {key:'contractor',    label:'اسم المتعاقد',                 type:'text',   src:'excel', required:false},
+    {key:'contract_manager_id', label:'الرقم الوظيفي لمدير العقد', type:'text', src:'excel', required:false},
+    {key:'status',        label:'حالة العقد',                   type:'select', src:'excel', required:true},
+    {key:'budget',        label:'الميزانية (ريال)',              type:'number', src:'excel', required:false},
+    {key:'vo_amount',     label:'قيمة أوامر التغيير (ريال)',      type:'number', src:'excel', required:false},
+    {key:'revised_value', label:'قيمة العقد بعد التغيير',     type:'number', src:'excel', required:false},
+    {key:'approved',      label:'المعتمد (ريال)',                type:'number', src:'excel', required:false},
+    {key:'spent',         label:'المصروف (ريال)',                type:'number', src:'excel', required:false},
+    {key:'progress',      label:'نسبة الإنجاز الفعلية %',        type:'number', src:'excel', required:false},
+    {key:'planned_progress',label:'نسبة الإنجاز المخططة %',      type:'number', src:'excel', required:false},
+    {key:'project_status',label:'حالة المشروع',                  type:'text',   src:'excel', required:false},
+    {key:'pac_status',    label:'حالة الاستلام الابتدائي PAC',    type:'text',   src:'excel', required:false},
+    {key:'fac_status',    label:'حالة الاستلام النهائي FAC',      type:'text',   src:'excel', required:false},
+
+  ];
+
+  const coreHTML=coreFields.map(f=>`
+    <div class="cf-item">
+      <span style="font-size:13px;color:#64748b;min-width:20px">🔒</span>
+      <span class="cf-label">${f.label}${f.required?' <span style="color:#dc2626">*</span>':''}</span>
+      <span class="cf-type">${tn[f.type]||f.type}</span>
+      <span style="font-size:10px;background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:20px;font-weight:700">Excel</span>
+      <span style="font-size:10px;color:#94a3b8">Supabase: ${f.key}</span>
+    </div>`).join('');
+
+  // حقول extra_fields من Excel — مع إخفاء/إظهار
+  const excelCFs=cfs.filter(f=>excelKeys.has(f.key));
+  const excelCFsHTML=excelCFs.map(f=>{
+    const hidden=isFieldHidden(f.key);
+    return `<div class="cf-item" style="${hidden?'opacity:.5':''}">
+      <span style="font-size:13px;color:#64748b;min-width:20px">📊</span>
+      <span class="cf-label" style="${hidden?'text-decoration:line-through':''}">${f.label}</span>
+      <span class="cf-type">${tn[f.type]||f.type}</span>
+      <span style="font-size:10px;background:#dbeafe;color:#1e40af;padding:2px 8px;border-radius:20px;font-weight:700">Excel</span>
+      <button class="btn btn-gray btn-sm" onclick="openEditField('${f.key}')">✏️</button>
+      <button class="btn btn-gray btn-sm" onclick="toggleFieldVisibility('${f.key}')" title="${hidden?'إظهار':'إخفاء'}">${hidden?'👁 إظهار':'🙈 إخفاء'}</button>
+    </div>`;
+  }).join('');
+
+  // حقول مضافة يدوياً (ليست من Excel)
+  const manualCFs=cfs.filter(f=>!excelKeys.has(f.key));
+  const manualHTML=manualCFs.length ? `
+    <div style="margin:14px 0 6px;font-size:11px;font-weight:800;color:var(--navy);padding-top:10px;border-top:1.5px dashed var(--border)">
+      ✋ حقول مضافة يدوياً
+    </div>
+    ${manualCFs.map(f=>{
+      const hidden=isFieldHidden(f.key);
+      return `<div class="cf-item" style="${hidden?'opacity:.5':''}">
+        <span style="font-size:13px;color:#64748b;min-width:20px">✋</span>
+        <span class="cf-label" style="${hidden?'text-decoration:line-through':''}">${f.label}</span>
+        <span class="cf-type">${tn[f.type]||f.type}</span>
+        <span style="font-size:10px;background:#f3e8ff;color:#7c3aed;padding:2px 8px;border-radius:20px;font-weight:700">يدوي</span>
+        <button class="btn btn-gray btn-sm" onclick="openEditField('${f.key}')">✏️</button>
+        <button class="btn btn-gray btn-sm" onclick="toggleFieldVisibility('${f.key}')">${hidden?'👁 إظهار':'🙈 إخفاء'}</button>
+        <button class="btn btn-red btn-sm" onclick="delField('${f.key}','${f.label}')">🗑️</button>
+      </div>`;
+    }).join('')}` : '';
+
+  document.getElementById('allFieldsList').innerHTML=`
+    <div style="font-size:11px;font-weight:800;color:var(--navy);margin-bottom:10px;display:flex;align-items:center;gap:8px">
+      🔒 الحقول الأساسية (مخزنة مباشرة في Supabase)
+      <span style="font-size:10px;color:var(--muted);font-weight:500">— لا يمكن تعديل مفاتيحها</span>
+    </div>
+    ${coreHTML}
+    <div style="font-size:11px;font-weight:800;color:var(--navy);margin:14px 0 8px;padding-top:12px;border-top:1.5px solid var(--border)">
+      📊 حقول Excel الإضافية (مخزنة في extra_fields)
+    </div>
+    ${excelCFsHTML||'<div style="color:var(--muted);font-size:12px;padding:8px">اضغط 🔄 مزامنة مع Excel لإضافتها</div>'}
+    ${manualHTML}`;
+}
+
+function openPFEdit(key){
+  const f=getProjectFields().find(x=>x.key===key);if(!f)return;
+  document.getElementById('pf_key').value=key;document.getElementById('pf_label').value=f.label;
+  document.getElementById('pf_type').value=f.type;document.getElementById('pf_required').checked=f.required;
+  document.getElementById('pfEditOv').classList.add('on');
+}
+
+function savePFEdit(){
+  const key=document.getElementById('pf_key').value;const label=document.getElementById('pf_label').value.trim();
+  if(!label){toast('⚠️ يرجى إدخال اسم الحقل','#dc2626');return}
+  const pfs=getProjectFields();const idx=pfs.findIndex(x=>x.key===key);
+  if(idx>=0)pfs[idx]={...pfs[idx],label,type:document.getElementById('pf_type').value,required:document.getElementById('pf_required').checked};
+  saveProjectFields(pfs);closeOv('pfEditOv');buildCFPage();renderDynamicProjectForm();toast('✅ تم التحديث','#059669');
+}
+
+function togglePF(key){const pfs=getProjectFields();const idx=pfs.findIndex(x=>x.key===key);if(idx>=0)pfs[idx].visible=!pfs[idx].visible;saveProjectFields(pfs);buildCFPage();renderDynamicProjectForm();}
+
+function renderDynamicProjectForm(){
+  const container=document.getElementById('dynamicProjectForm');if(!container)return;
+  const pfs=getProjectFields();
+  const tm={text:f=>`<input type="text" id="f_${f.key}" placeholder="${f.label}">`,number:f=>`<input type="number" id="f_${f.key}" placeholder="0" min="0">`,percent:f=>`<input type="number" id="f_${f.key}" placeholder="0-100" min="0" max="100">`,date:f=>`<input type="date" id="f_${f.key}">`};
+  container.innerHTML=pfs.filter(f=>f.visible).map(f=>`<div class="fg"><label>${f.label}${f.required?' *':''}</label>${(tm[f.type]||tm.text)(f)}</div>`).join('');
+}
+
+function openBasicFieldEdit(key,title){
+  const bf=getBasicFields();document.getElementById('bfKey').value=key;document.getElementById('bfTitle').textContent=title;
+  document.getElementById('bfItemsTextarea').value=bf[key].join('\n');document.getElementById('basicFieldEditOv').classList.add('on');
+}
+
+function saveBasicFieldItems(){
+  const key=document.getElementById('bfKey').value;
+  const items=document.getElementById('bfItemsTextarea').value.split('\n').map(i=>i.trim()).filter(i=>i.length>0);
+  if(!items.length){toast('⚠️ لا يمكن ترك القائمة فارغة','#dc2626');return}
+  const bf=getBasicFields();bf[key]=items;saveBasicFields(bf);
+  populateDropdownSelectors();buildCFPage();closeOv('basicFieldEditOv');toast('✅ تم التحديث','#059669');
+}
+
+function openAddField(){
+  document.getElementById('fieldOvTitle').textContent='➕ حقل مخصص جديد';
+  ['nf_label','nf_opts','nf_key'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('nf_type').value='text';document.getElementById('nf_opts_wrap').style.display='none';
+  document.getElementById('fieldOv').classList.add('on');
+}
+
+function openEditField(key){
+  const cf=getCFs().find(f=>f.key===key);if(!cf)return;
+  document.getElementById('fieldOvTitle').textContent='✏️ تعديل الحقل';
+  document.getElementById('nf_label').value=cf.label;document.getElementById('nf_type').value=cf.type;
+  document.getElementById('nf_opts').value=cf.options?.join(', ')||'';
+  document.getElementById('nf_opts_wrap').style.display=cf.type==='select'?'block':'none';
+  document.getElementById('nf_key').value=key;document.getElementById('fieldOv').classList.add('on');
+}
+
+function onFieldTypeChange(){document.getElementById('nf_opts_wrap').style.display=document.getElementById('nf_type').value==='select'?'block':'none';}
+
+function saveField(){
+  const label=document.getElementById('nf_label').value.trim();const type=document.getElementById('nf_type').value;const opts=document.getElementById('nf_opts').value.trim();
+  if(!label){showErr('fieldErr','يرجى إدخال اسم الحقل');return}
+  const key=document.getElementById('nf_key').value;const cfs=getCFs();
+  if(key){const idx=cfs.findIndex(f=>f.key===key);cfs[idx]={...cfs[idx],label,type,options:opts?opts.split(',').map(o=>o.trim()).filter(o=>o.length>0):[]};}
+  else cfs.push({key:'cf_'+Date.now(),label,type,options:opts?opts.split(',').map(o=>o.trim()).filter(o=>o.length>0):[]});
+  saveCFs(cfs);closeOv('fieldOv');buildCFPage();renderCustomFieldsForm();buildFilterFieldOptions();
+}
+
+function delField(key,label){pendingDel=key;pendingDelType='field';document.getElementById('delMsg').textContent=`حذف حقل "${label}"؟`;document.getElementById('delOv').classList.add('on');}
+
+// ✅ إصلاح: استخدام getExtraVal في نافذة التفصيل
+function showDetail(id){
+  const p=allProjects.find(x=>x.id===id);const cfs=getCFs();const bf=getBasicFields();const ex=p.extra_fields||{};
+  const ms=bf.statuses.find(s=>s.k===p.status);const rs=ms?ms.v:p.status;
+  document.getElementById('modalTitle').textContent=p.name_ar;
+  document.getElementById('modalBody').innerHTML=`<div style="display:flex;gap:8px;margin-bottom:18px"><span class="${p.status==='OVERDUE'?'bad':'ok'}">${rs}</span></div>${[
+
+    ['المقاول',p.contractor||'—'],
+    ['رقم أمر الشراء PO',p.po_number||'—'],
+    ['رقم الوظيفي لمدير العقد',p.contract_manager_id||'—'],
+    ['الميزانية (قيمة العقد)',fmtFull(p.budget)],
+    ['قيمة أوامر التغيير',fmtFull(p.vo_amount)],
+    ['قيمة العقد بعد التغيير',fmtFull(p.revised_value)],
+    ['المعتمد',fmtFull(p.approved)],
+    ['المصروف',fmtFull(p.spent)],
+    ['نسبة الإنجاز الفعلية',(p.progress||0)+'%'],
+    ['نسبة الإنجاز المخططة',(p.planned_progress||0)+'%'],
+    ['تباين الإنجاز',((p.progress||0)-(p.planned_progress||0))+'%'],
+    ['حالة المشروع',p.project_status||'—'],
+    ['الاستلام الابتدائي PAC',p.pac_status||'—'],
+    ['الاستلام النهائي FAC',p.fac_status||'—'],
+    ['أيام التأخير',getDelayDays(p)+' يوم'],
+    ['نسبة التأخير',getDelayPct(p)>0?getDelayPct(p)+'%':'—'],
+    ['آخر تعديل', getEditStamp(p).at],
+    ['عُدِّل بواسطة', getEditStamp(p).by],
+    ...cfs.filter(f=>{
+      if(isFieldHidden(f.key)) return false;
+      // استثناء "تباين الإنجاز" المخصّص لأنه يُعرض محسوباً أعلاه (مطابقة مرنة)
+      const norm=s=>String(s||'').replace(/^cf_/,'').replace(/[\s_]/g,'');
+      if(norm(f.key)==='تباينالإنجاز' || norm(f.label)==='تباينالإنجاز') return false;
+      return true;
+    }).map(f=>[f.label, getExtraVal(ex,f.key)||'—'])
+  ].map(([k,v])=>`<div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border)"><span>${k}</span><b>${v}</b></div>`).join('')}`;
+  document.getElementById('detailOv').classList.add('on');
+}
+
+const roleMap={general_manager:'مدير عام',dept_manager:'مدير إدارة',contract_manager:'مدير عقد'};
+const roleColor={general_manager:'#1e40af',dept_manager:'#059669',contract_manager:'#7c3aed'};
+
+async function buildUsers(){
+  const{data}=await sb.from('profiles').select('*');const isGM=currentProfile?.role==='general_manager';
+  document.getElementById('usersGrid').innerHTML=(data||[]).map(u=>`
+    <div class="ucard" style="border-top:3px solid ${roleColor[u.role]||'#64748b'}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px">
+        <div>
+          <div style="font-size:14px;font-weight:800;color:var(--navy)">${u.name}</div>
+          <div style="margin-top:4px"><span style="background:${roleColor[u.role]||'#64748b'}22;color:${roleColor[u.role]||'#64748b'};padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700">${roleMap[u.role]||u.role}</span></div>
+          ${u.department?`<div style="font-size:11px;color:var(--muted);margin-top:5px">📂 ${u.department}</div>`:''}
+        </div>
+        <div style="font-size:24px">👤</div>
+      </div>
+      ${isGM?`<div style="display:flex;gap:6px;margin-top:10px;border-top:1px solid var(--border);padding-top:10px">
+        <button class="btn btn-gray btn-sm" style="flex:1;justify-content:center" data-uid="${u.id}" data-uname="${encodeURIComponent(u.name)}" data-urole="${u.role}" data-udept="${u.department||''}" data-action="edit-user">✏️ تعديل</button>
+        <button class="btn btn-red btn-sm" style="flex:1;justify-content:center" data-uid="${u.id}" data-uname="${encodeURIComponent(u.name)}" data-action="del-user">🗑️ حذف</button>
+      </div>`:''}
+    </div>`).join('');
+  document.querySelectorAll('[data-action="edit-user"]').forEach(btn=>btn.addEventListener('click',()=>openEditUser(btn.dataset.uid,decodeURIComponent(btn.dataset.uname),btn.dataset.urole,btn.dataset.udept)));
+  document.querySelectorAll('[data-action="del-user"]').forEach(btn=>btn.addEventListener('click',()=>delUser(btn.dataset.uid,decodeURIComponent(btn.dataset.uname))));
+}
+
+function openEditUser(id,name,role,dept){
+  document.getElementById('eu_id').value=id;document.getElementById('eu_name').value=name;
+  document.getElementById('eu_role').value=role;document.getElementById('eu_pass').value='';
+  const bf=getBasicFields();const euDept=document.getElementById('eu_dept');
+  euDept.innerHTML='<option value="">-- حدد الإدارة --</option>'+bf.departments.map(d=>`<option value="${d}"${d===dept?' selected':''}>${d}</option>`).join('');
+  document.getElementById('editDeptFld').style.display=['dept_manager','contract_manager'].includes(role)?'block':'none';
+  document.getElementById('editUserOv').classList.add('on');
+}
+
+function onEditUserRoleChange(){document.getElementById('editDeptFld').style.display=['dept_manager','contract_manager'].includes(document.getElementById('eu_role').value)?'block':'none';}
+
+async function saveEditUser(){
+  const id=document.getElementById('eu_id').value;const name=document.getElementById('eu_name').value.trim();
+  const role=document.getElementById('eu_role').value;const dept=document.getElementById('eu_dept').value;const pass=document.getElementById('eu_pass').value;
+  if(!name||!role){showErr('editUserErr','يرجى تعبئة جميع الحقول');return}
+  const{error}=await sb.from('profiles').update({name,role,department:dept||null}).eq('id',id);
+  if(error){showErr('editUserErr',error.message);return}
+  if(pass){
+    const sbUrl=getSBUrl();
+    const res=await fetch(`${sbUrl}/functions/v1/manage-user`,{method:'POST',headers:{'Content-Type':'application/json','Authorization':'Bearer '+getSBKey()},body:JSON.stringify({action:'update_password',userId:id,updates:{password:pass}})});
+    const result=await res.json();if(result.error){showErr('editUserErr','خطأ: '+result.error);return}
+  }
+  toast('✅ تم التحديث','#059669');closeOv('editUserOv');buildUsers();
+}
+
+function delUser(id,name){pendingDel=id;pendingDelType='user';document.getElementById('delMsg').textContent=`حذف حساب "${name}"؟`;document.getElementById('delOv').classList.add('on');}
+
+function openAddUser(){
+  ['u_name','u_emp_id','u_pass'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('u_role').value='';document.getElementById('u_dept').value='';
+  document.getElementById('userOv').classList.add('on');
+}
+
+function onUserRoleModalChange(){document.getElementById('deptModalFld').style.display=['dept_manager','contract_manager'].includes(document.getElementById('u_role').value)?'block':'none';}
+
+async function addUser(){
+  const name=document.getElementById('u_name').value.trim();
+  const empId=document.getElementById('u_emp_id').value.trim();
+  const pass=document.getElementById('u_pass').value;
+  const role=document.getElementById('u_role').value;
+  const dept=document.getElementById('u_dept').value;
+
+  if(!name||!empId||!pass||!role){showErr('userErr','يرجى تعبئة جميع الحقول');return}
+  if(empId.length!==6){showErr('userErr','الرقم الوظيفي يجب أن يكون 6 خانات');return}
+  if(pass.length<6){showErr('userErr','كلمة المرور 6 أحرف على الأقل');return}
+
+  const sbUrl=getSBUrl();
+  const sbKey=getSBKey();
+
+  try{
+    // ✅ إنشاء المستخدم عبر Edge Function (تتجاوز تفعيل البريد)
+    const res=await fetch(`${sbUrl}/functions/v1/manage-user`,{
+      method:'POST',
+      headers:{'Content-Type':'application/json','Authorization':'Bearer '+sbKey},
+      body:JSON.stringify({
+        action:'create',
+        email:`${empId}@company.local`,
+        password:pass,
+        userData:{name,role,department:dept||null,emp_id:empId}
+      })
+    });
+    const result=await res.json();
+    if(result.error){showErr('userErr','❌ '+result.error);return}
+
+    // ✅ أضف في profiles باستخدام الـ ID الراجع من Edge Function
+    const userId=result.user?.id||result.id;
+    if(!userId){showErr('userErr','❌ لم يُرجع الـ ID — تحقق من Edge Function');return}
+
+    const{error:profErr}=await sb.from('profiles').insert({
+      id:userId, name, role,
+      department:dept||null,
+      emp_id:empId
+    });
+    if(profErr){
+      // لو profiles فشل — احذف المستخدم من auth لتجنب حساب بدون صلاحيات
+      await fetch(`${sbUrl}/functions/v1/manage-user`,{
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer '+sbKey},
+        body:JSON.stringify({action:'delete',userId})
+      });
+      showErr('userErr','❌ خطأ في إضافة الصلاحيات: '+profErr.message);
+      return;
+    }
+
+    toast('👥 تم إنشاء الحساب بنجاح','#059669');
+    closeOv('userOv');
+    buildUsers();
+
+  }catch(e){
+    showErr('userErr','❌ خطأ: '+e.message);
+  }
+}
+
+function showPage(n,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('on'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('page'+n).classList.add('on');if(btn)btn.classList.add('on');
+  if(n===1)buildPage1();if(n===2)buildPage2();if(n===3)buildMgmt();if(n===4)buildCFPage();if(n===5)buildUsers();
+}
+
+// عرض ذكي للقيم المالية (المدخلة بالريال الكامل):
+// ≥ مليار → بالمليار، ≥ مليون → بالمليون، أقل من مليون → بالريال كاملاً
+function fmt(n){
+  n=+n||0;
+  if(n>=1e9)  return (n/1e9).toLocaleString('en-US',{maximumFractionDigits:2})+' مليار';
+  if(n>=1e6)  return (n/1e6).toLocaleString('en-US',{maximumFractionDigits:2})+' مليون';
+  if(n>=1000) return n.toLocaleString('en-US',{maximumFractionDigits:0})+' ريال';
+  return n.toLocaleString('en-US',{maximumFractionDigits:2})+' ريال';
+}
+// القيمة الكاملة بالريال مع الفواصل (للتفاصيل والجدول حيث الدقة مهمة)
+function fmtFull(n){ return (+n||0).toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2})+' ريال'; }
+function showScr(id){document.getElementById(id).classList.add('on');}
+function hideScr(id){document.getElementById(id).classList.remove('on');}
+function closeOv(id){document.getElementById(id).classList.remove('on');}
+function showErr(id,msg){const el=document.getElementById(id);if(el){el.textContent=msg;el.classList.add('on');}}
+function toast(msg,bg='#0f172a'){const t=document.getElementById('toast');t.textContent=msg;t.style.background=bg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),3200);}
+
+window.addEventListener('load',async()=>{
+  // ✅ فحص تحميل المكتبات الأساسية
+  const missing=[];
+  if(typeof supabase==='undefined') missing.push('Supabase');
+  if(typeof Chart==='undefined') missing.push('Chart.js');
+  if(typeof XLSX==='undefined') missing.push('XLSX');
+  if(missing.length){
+    document.body.innerHTML='<div style="font-family:Tajawal,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh;background:#0f172a"><div style="background:#fff;border-radius:16px;padding:32px;max-width:400px;text-align:center"><div style="font-size:40px;margin-bottom:12px">⚠️</div><div style="font-size:18px;font-weight:900;color:#0f172a;margin-bottom:8px">خطأ في تحميل المكتبات</div><div style="font-size:13px;color:#64748b;margin-bottom:16px">لم يتم تحميل: <b style="color:#dc2626">'+missing.join(', ')+'</b></div><div style="font-size:12px;color:#64748b;line-height:1.8">تأكد من اتصالك بالإنترنت ثم أعد تحميل الصفحة<br><button onclick="location.reload()" style="margin-top:12px;padding:10px 24px;background:#2563eb;color:#fff;border:none;border-radius:8px;font-size:13px;font-family:Tajawal,sans-serif;font-weight:700;cursor:pointer">🔄 إعادة التحميل</button></div></div></div>';
+    return;
+  }
+
+  const url=PRESET_SB_URL||localStorage.getItem('sb_url');const key=PRESET_SB_KEY||localStorage.getItem('sb_key');
+  if(!url||!key){showScr('setupScreen');return}
+  initSB(url,key);
+  try{
+    const{data:{session}}=await sb.auth.getSession();
+    if(session){
+      currentUser=session.user;
+      const{data,error}=await sb.from('profiles').select('*').eq('id',currentUser.id);
+      if(!error&&data&&data.length){currentProfile=data[0];hideScr('setupScreen');hideScr('loginScreen');startApp();return}
+    }
+  }catch(e){console.error(e)}
+  hideScr('setupScreen');showScr('loginScreen');
+});
+
+// ══════════════════════════════════════════════════
+// ✅ نظام الاستيراد — مُصلَح بالكامل
+// ══════════════════════════════════════════════════
+
+// خريطة أعمدة Excel الأساسية إلى حقول قاعدة البيانات
+// ══════════════════════════════════════════════════
+// خريطة أعمدة الإكسل — مبنية على ملف Excel الفعلي
+// العمود الإكسل → حقل قاعدة البيانات المباشر
+// ══════════════════════════════════════════════════
+const COL_MAP = {
+  'اسم المشروع':                   'name_ar',
+  'الإدارة':                        'department',
+  'اسم المتعاقد':                   'contractor',
+  'حالة العقد':                     'status',
+  'رقم أمر الشراء':                 'po_number',
+  'الرقم الوظيفي لمدير العقد':     'contract_manager_id',
+  'الميزانية':                      'budget',
+  'المعتمد':                        'approved',
+  'المصروف':                        'spent',
+  'نسبة الإنجاز':                   'progress',
+  'نسبة الإنجاز الفعلية':          'progress',
+  'نسبة الإنجاز المخططه':          'planned_progress',
+  'نسبة الإنجاز المخططة':          'planned_progress',
+  'VO Approved Amount':             'vo_amount',
+  'قيمة أوامر التغيير':            'vo_amount',
+  'Revised Project value with V.O(+,-) approved': 'revised_value',
+  'القيمة شاملة أوامر التغيير':   'revised_value',
+  'قيمة العقد بعد التغيير':       'revised_value',
+  'حالة المشروع':                  'project_status',
+  'PAC Status':                     'pac_status',
+  'FAC Status':                     'fac_status',
+  // 'أيام التأخير' → تباين العقد (يُعالج في extra_fields مباشرة)
+};
+
+// أعمدة الإكسل تُحفظ في extra_fields (موجودة في الملف الفعلي)
+const KNOWN_EXTRA_COLS = [
+  'الجهة المشرفة',
+  'الترسية',
+  'العقد',
+  'البداية',
+  'النهاية',
+  'النهاية (شامل التمديد)',
+  'مدة المشروع',
+  'مدة التمديد',
+  'مدة المشروع (شامل التمديد)',
+  'تباين العقد',
+  'الملاحظات',
+];
+
+// خريطة: اسم العمود في الإكسل ← المفتاح المخزَّن داخل extra_fields
+const KNOWN_COL_TO_KEY = {
+  'الجهة المشرفة':'الجهة_المشرفة',
+  'الترسية':'تاريخ_الترسية',
+  'العقد':'تاريخ_العقد',
+  'البداية':'تاريخ_البداية',
+  'النهاية':'تاريخ_النهاية',
+  'النهاية (شامل التمديد)':'تاريخ_النهاية_شامل_التمديد',
+  'مدة المشروع':'مدة_المشروع',
+  'مدة التمديد':'مدة_التمديد',
+  'مدة المشروع (شامل التمديد)':'مدة_المشروع_شامل_التمديد',
+  'تباين العقد':'تباين_العقد',
+  'الملاحظات':'الملاحظات',
+};
+
+// الحقول المخصصة المقابلة لـ KNOWN_EXTRA_COLS في النظام
+// مفتاح الحفظ في extra_fields → label للعرض
+const EXTRA_FIELDS_DEF = {
+  'الجهة_المشرفة':                  {label:'الجهة المشرفة',               type:'text'},
+  'تاريخ_الترسية':                  {label:'تاريخ الترسية',                type:'date'},
+  'تاريخ_العقد':                    {label:'تاريخ العقد',                  type:'date'},
+  'تاريخ_البداية':                  {label:'تاريخ البداية',                type:'date'},
+  'تاريخ_النهاية':                  {label:'تاريخ النهاية',                type:'date'},
+  'تاريخ_النهاية_شامل_التمديد':    {label:'تاريخ النهاية (شامل التمديد)', type:'date'},
+  'مدة_المشروع':                    {label:'مدة المشروع (يوم)',             type:'number'},
+  'مدة_التمديد':                    {label:'مدة التمديد (يوم)',             type:'number'},
+  'مدة_المشروع_شامل_التمديد':      {label:'مدة المشروع شامل التمديد (يوم)',type:'number'},
+  'تباين_العقد':                    {label:'تباين العقد (يوم)',             type:'number'},
+  'الملاحظات':                      {label:'الملاحظات',                    type:'text'},
+  // 'كود_المشروع' — حقل داخلي للنظام، لا يظهر في الواجهة
+};
+
+let parsedImportProjects = [];
+let missingCols = [];        // أعمدة موجودة في البيانات لكن غائبة عن الملف الحالي
+let missingColDecisions = {}; // قرار كل عمود مفقود: 'keep' أو 'clear'
+
+// ── تحويل تاريخ Excel (رقم أو نص أو Date) إلى yyyy-mm-dd ──
+function excelDateToStr(val){
+  if(val===''||val===null||val===undefined) return '';
+  // Date object من cellDates:true
+  if(val instanceof Date){
+    if(isNaN(val.getTime())) return '';
+    const y=val.getFullYear();
+    const m=String(val.getMonth()+1).padStart(2,'0');
+    const d=String(val.getDate()).padStart(2,'0');
+    return `${y}-${m}-${d}`;
+  }
+  // نص بتنسيق yyyy-mm-dd
+  if(typeof val==='string'){
+    const s=val.trim();
+    if(/^\d{4}-\d{2}-\d{2}/.test(s)) return s.slice(0,10);
+    // تنسيق dd/mm/yyyy أو dd-mm-yyyy
+    const dm=s.match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})$/);
+    if(dm) return `${dm[3]}-${dm[2].padStart(2,'0')}-${dm[1].padStart(2,'0')}`;
+    return s;
+  }
+  // رقم Excel (عدد الأيام من 1900)
+  try{
+    const n=Number(val);
+    if(isNaN(n)||n<1) return '';
+    const d=new Date(Math.round((n-25569)*86400*1000));
+    if(isNaN(d.getTime())) return '';
+    return d.toISOString().split('T')[0];
+  }catch(e){ return ''; }
+}
+
+// ── تطبيع حالة العقد — يدعم العربية والإنجليزية ──
+function fixStatus(s){
+  const up=String(s||'').trim().toUpperCase();
+  if(up.includes('OVERDUE')||up==='متأخر'||up==='متأخرة') return 'OVERDUE';
+  if(up.includes('CLOSING')||up==='إغلاق'||up==='منتهي'||up==='منتهية') return 'CLOSING';
+  return 'ONGOING';
+}
+
+// توليد معرّف ثابت من اسم المشروع (نفس الاسم يعطي نفس المعرّف عبر كل عمليات الاستيراد)
+function slugifyName(name){
+  let h=0;const s=String(name||'').trim();
+  for(let i=0;i<s.length;i++){h=((h<<5)-h)+s.charCodeAt(i);h|=0;}
+  return Math.abs(h).toString(36);
+}
+
+// تطبيع نسبة مئوية: تقبل 0.55 (كسر) أو 55 (نسبة) وترجع 55، ضمن 0-100
+function normPct(v){
+  let n=parseFloat(v);
+  if(isNaN(n)) return 0;
+  if(n>0 && n<=1) n=n*100;       // كسر عشري → نسبة
+  return Math.min(100,Math.max(0,Math.round(n)));
+}
+
+// ── تنظيف نص العمود من المسافات الزائدة ──
+function trimRow(row){
+  const clean={};
+  for(const k in row){ clean[k.trim()]=typeof row[k]==='string'?row[k].trim():row[k]; }
+  return clean;
+}
+
+// ══════════════════════════════════════════════════
+// ✅ تصدير Excel — يصدّر المعروض (حسب الصلاحية + الفلاتر)
+// بصيغة تطابق الاستيراد، مع أي حقول مخصّصة مضافة
+// ══════════════════════════════════════════════════
+function exportToExcel(){
+  if(typeof XLSX==='undefined'){ toast('⚠️ مكتبة Excel غير محملة — أعد تحميل الصفحة','#dc2626'); return; }
+
+  // المعروض حالياً: الصلاحية + الفلاتر النشطة مطبّقة
+  const rows=getFilteredProjects();
+  if(!rows.length){ toast('لا توجد مشاريع للتصدير','#d97706'); return; }
+
+  // خريطة: المفتاح الداخلي في extra_fields ← اسم عمود الإكسل (للأعمدة المعروفة)
+  const KEY_TO_COL={};
+  Object.keys(KNOWN_COL_TO_KEY).forEach(col=>{ KEY_TO_COL[KNOWN_COL_TO_KEY[col]]=col; });
+
+  // الحقول الداخلية لا تُصدَّر
+  const internalKeys=new Set(['كود_المشروع','_updated_by','_updated_at']);
+
+  // ── ترتيب الأعمدة: أساسية → معروفة → مخصّصة إضافية ──
+  // 1) الأعمدة الأساسية (نفس ترتيب الاستيراد)
+  const baseCols=[
+    ['الإدارة','department'],
+    ['رقم أمر الشراء','po_number'],
+    ['اسم المشروع','name_ar'],
+    ['الرقم الوظيفي لمدير العقد','contract_manager_id'],
+    ['اسم المتعاقد','contractor'],
+    ['الميزانية','budget'],
+    ['قيمة أوامر التغيير','vo_amount'],
+    ['قيمة العقد بعد التغيير','revised_value'],
+    ['المعتمد','approved'],
+    ['المصروف','spent'],
+    ['نسبة الإنجاز الفعلية','progress'],
+    ['نسبة الإنجاز المخططة','planned_progress'],
+    ['حالة المشروع','project_status'],
+    ['PAC Status','pac_status'],
+    ['FAC Status','fac_status'],
+    ['حالة العقد','status'],
+  ];
+
+  // 2) الأعمدة المعروفة الإضافية (الجهة، التواريخ، المدد، التباين، الملاحظات)
+  const knownKeys=['الجهة_المشرفة','تاريخ_الترسية','تاريخ_العقد','تاريخ_البداية','تاريخ_النهاية',
+    'تاريخ_النهاية_شامل_التمديد','مدة_المشروع','مدة_التمديد','مدة_المشروع_شامل_التمديد','تباين_العقد','الملاحظات'];
+
+  // 3) أي حقول مخصّصة أضافها المستخدم وليست ضمن المعروفة (مثل: اسم الاستشاري)
+  const knownKeySet=new Set(knownKeys);
+  const customCols=[];
+  getCFs().forEach(cf=>{
+    const rawKey=cf.key.replace(/^cf_/,'');
+    if(internalKeys.has(rawKey)) return;
+    if(knownKeySet.has(rawKey)) return;        // معروف أصلاً
+    if(KEY_TO_COL[rawKey]) return;             // معروف أصلاً
+    customCols.push({key:rawKey, label:cf.label||rawKey});
+  });
+
+  // تحويل تاريخ مخزّن (نص ISO أو قيمة) إلى صيغة بسيطة YYYY-MM-DD
+  const fmtDate=v=>{
+    if(!v) return '';
+    const d=new Date(v);
+    if(isNaN(d)) return String(v); // ليس تاريخاً صالحاً، أرجعه كما هو
+    const y=d.getFullYear(), m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0');
+    return `${y}-${m}-${day}`;
+  };
+  const dateKeys=new Set(['تاريخ_الترسية','تاريخ_العقد','تاريخ_البداية','تاريخ_النهاية','تاريخ_النهاية_شامل_التمديد']);
+
+  // ── بناء الصفوف ──
+  const aoa=rows.map(p=>{
+    const ex=p.extra_fields||{};
+    const row={};
+    // أساسية
+    baseCols.forEach(([col,key])=>{
+      let v=p[key];
+      row[col]=(v===null||v===undefined)?'':v;
+    });
+    // معروفة (من extra_fields)
+    knownKeys.forEach(key=>{
+      const col=KEY_TO_COL[key]||EXTRA_FIELDS_DEF[key]?.label||key;
+      let v=getExtraVal(ex,key);
+      if(dateKeys.has(key)) v=fmtDate(v);
+      row[col]=v;
+    });
+    // مخصّصة إضافية
+    customCols.forEach(c=>{ row[c.label]=getExtraVal(ex,c.key); });
+    return row;
+  });
+
+  // ترتيب رؤوس الأعمدة
+  const headers=[
+    ...baseCols.map(c=>c[0]),
+    ...knownKeys.map(k=>KEY_TO_COL[k]||EXTRA_FIELDS_DEF[k]?.label||k),
+    ...customCols.map(c=>c.label),
+  ];
+
+  const ws=XLSX.utils.json_to_sheet(aoa,{header:headers});
+  const wb=XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb,ws,'المشاريع');
+
+  // اسم الملف مع التاريخ وعدد السجلات وحالة الفلترة
+  const today=new Date().toISOString().slice(0,10);
+  const filtered=activeFilters.length>0?'_مفلتر':'';
+  XLSX.writeFile(wb,`بيانات_المشاريع_${today}${filtered}.xlsx`);
+
+  toast(`📤 تم تصدير ${rows.length} مشروع`,'#059669');
+}
+
+function openImportModal(){
+  document.getElementById('importErr').classList.remove('on');
+  document.getElementById('importProgress').style.display='none';
+  document.getElementById('importPreview').style.display='none';
+  document.getElementById('importProgressBar').style.width='0%';
+  document.getElementById('importFile').value='';
+  const btn=document.getElementById('importBtn');
+  btn.disabled=true; btn.style.opacity='.5'; btn.textContent='📥 بدء الاستيراد';
+  parsedImportProjects=[];
+  missingCols=[]; missingColDecisions={}; window._missingColsResolved=false;
+  document.getElementById('importOv').classList.add('on');
+}
+
+function onImportFileChange(){
+  const file=document.getElementById('importFile').files[0];
+  if(!file) return;
+  document.getElementById('importErr').classList.remove('on');
+  document.getElementById('importPreview').style.display='none';
+  // ملف جديد = حالة قرارات نظيفة
+  window._missingColsResolved=false;
+
+  // ✅ فحص تحميل مكتبة XLSX
+  if(typeof XLSX==='undefined'){
+    showErr('importErr','⚠️ مكتبة Excel لم تُحمَّل — تأكد من الاتصال بالإنترنت وأعد تحميل الصفحة');
+    return;
+  }
+
+  const reader=new FileReader();
+  reader.onerror=()=>showErr('importErr','تعذّر قراءة الملف — تأكد أن الملف بصيغة .xlsx');
+  reader.onload=function(e){
+    try{
+      // ✅ cellDates:true يحوّل تواريخ Excel لـ Date objects
+      // raw:true نبقيه لأن raw:false يحوّل الأرقام لنصوص ويسبب مشاكل في parseInt
+      const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array',cellDates:true});
+      const ws=wb.Sheets[wb.SheetNames[0]];
+      const rawRows=XLSX.utils.sheet_to_json(ws,{defval:'',raw:true});
+      if(!rawRows.length){ showErr('importErr','الملف فارغ أو لا يحتوي على بيانات'); return; }
+
+      // ✅ تنظيف المسافات + تجاهل الصفوف التي اسم المشروع فيها = اسم عمود (header مكرر)
+      const rows=rawRows.map(trimRow).filter(r=>{
+        const n=String(r['اسم المشروع']||'').trim();
+        return n && n!=='اسم المشروع'; // تجاهل صف header المكرر
+      });
+      if(!rows.length){ showErr('importErr','لا توجد صفوف تحتوي على اسم مشروع صالح'); return; }
+      const cols=Object.keys(rows[0]);
+
+      // فحص الأعمدة الإلزامية
+      const required=['اسم المشروع','الإدارة','اسم المتعاقد','حالة العقد'];
+      const missing=required.filter(r=>!cols.includes(r));
+      if(missing.length){ showErr('importErr','❌ أعمدة مفقودة: '+missing.join(' ، ')); return; }
+
+      // تحديد الأعمدة الإضافية غير المعروفة
+      const knownCols=[...Object.keys(COL_MAP),...KNOWN_EXTRA_COLS];
+      const extraCols=cols.filter(c=>!knownCols.includes(c));
+
+      // حساب المشاريع المتكررة الاسم (متعددة المتعاقدين)
+      const nameCount={};
+      rows.forEach(r=>{ const n=r['اسم المشروع']; if(n) nameCount[n]=(nameCount[n]||0)+1; });
+
+      parsedImportProjects=rows.map(row=>{
+        const name=String(row['اسم المشروع']||'').trim();
+        if(!name) return null;
+
+        // كود المشروع ثابت مشتق من الاسم نفسه، ليبقى الدمج متّسقاً عبر كل عمليات الاستيراد
+        let parentId='';
+        if(nameCount[name]>1){ parentId='PRJ-'+slugifyName(name); }
+
+        // بناء extra_fields — كلها بدون بادئة cf_ (تُضاف لاحقاً عند القراءة)
+        const extra={};
+        const addExtra=(col,key)=>{ if(row[col]!==''&&row[col]!==undefined) extra[key]=String(row[col]); };
+        const addDate=(col,key)=>{ const v=excelDateToStr(row[col]); if(v) extra[key]=v; };
+        const addNum=(col,key)=>{ const v=parseInt(row[col]); if(!isNaN(v)&&v!==0) extra[key]=String(v); };
+
+        addExtra('الجهة المشرفة','الجهة_المشرفة');
+        addDate('الترسية','تاريخ_الترسية');
+        addDate('العقد','تاريخ_العقد');
+        addDate('البداية','تاريخ_البداية');
+        addDate('النهاية','تاريخ_النهاية');
+        addDate('النهاية (شامل التمديد)','تاريخ_النهاية_شامل_التمديد');
+        addNum('مدة المشروع','مدة_المشروع');
+        addNum('مدة التمديد','مدة_التمديد');
+        addNum('مدة المشروع (شامل التمديد)','مدة_المشروع_شامل_التمديد');
+        addNum('تباين العقد','تباين_العقد');
+        addExtra('الملاحظات','الملاحظات');
+        extra['كود_المشروع']=parentId;
+
+        // الأعمدة الإضافية غير المعروفة
+        extraCols.forEach(c=>{ if(row[c]!=='') extra[c.replace(/\s+/g,'_')]=String(row[c]); });
+
+        // ✅ تباين العقد: السالب = تأخير (نأخذ القيمة المطلقة)، الموجب = متقدم (0)
+        // تباين العقد = أيام التأخير (سالب = تأخير، موجب = متقدم في الجدول)
+        // delay_days في Supabase = القيمة المطلقة عند التأخير فقط
+        const tabayun = parseFloat(row['تباين العقد']) || 0;
+        const delayDays = tabayun < 0 ? Math.abs(tabayun) : 0;
+
+        // ✅ رقم PO: نصّ كامل (يحافظ على الأصفار البادئة والدقة)، يتجاهل N/A وNew والفراغ
+        const poRaw = String(row['رقم أمر الشراء']??'').trim();
+        const poNum = (poRaw==='' || /^(n\/?a|new)$/i.test(poRaw)) ? null : poRaw;
+
+        return {
+          name_ar: name,
+          department: String(row['الإدارة']||'').trim(),
+          status: fixStatus(row['حالة العقد']),
+          contractor: String(row['اسم المتعاقد']||'').trim()||null,
+          po_number: poNum,
+          contract_manager_id: (row['الرقم الوظيفي لمدير العقد']!=null && String(row['الرقم الوظيفي لمدير العقد']).trim()!=='')
+            ? String(row['الرقم الوظيفي لمدير العقد']).trim() : null,
+          budget: parseFloat(row['الميزانية'])||0,
+          vo_amount: parseFloat(row['قيمة أوامر التغيير']??row['VO Approved Amount'])||0,
+          revised_value: parseFloat(row['القيمة شاملة أوامر التغيير']??row['Revised Project value with V.O(+,-) approved'])||0,
+          approved: parseFloat(row['المعتمد'])||0,
+          spent: parseFloat(row['المصروف'])||0,
+          progress: normPct(row['نسبة الإنجاز الفعلية']??row['نسبة الإنجاز']),
+          planned_progress: normPct(row['نسبة الإنجاز المخططة']??row['نسبة الإنجاز المخططه']),
+          project_status: (row['حالة المشروع']!=null&&String(row['حالة المشروع']).trim()!=='')?String(row['حالة المشروع']).trim():null,
+          pac_status: (row['PAC Status']!=null&&String(row['PAC Status']).trim()!=='')?String(row['PAC Status']).trim():null,
+          fac_status: (row['FAC Status']!=null&&String(row['FAC Status']).trim()!=='')?String(row['FAC Status']).trim():null,
+          delay_days: delayDays,
+          extra_fields: extra,
+          _extraCols: extraCols,
+        };
+      }).filter(Boolean);
+
+      if(!parsedImportProjects.length){ showErr('importErr','لم يتم العثور على سجلات صالحة'); return; }
+
+      // ── كشف الأعمدة المفقودة: حقول مخصصة لها قيم محفوظة لكنها غائبة عن هذا الملف ──
+      // مفاتيح الحقول الموجودة فعلاً في الملف الحالي (بصيغة المفتاح داخل extra_fields)
+      const fileKeys=new Set();
+      // الأعمدة المعروفة الثابتة الموجودة في الملف
+      Object.keys(KNOWN_COL_TO_KEY).forEach(col=>{ if(cols.includes(col)) fileKeys.add(KNOWN_COL_TO_KEY[col]); });
+      // الأعمدة الإضافية غير المعروفة الموجودة في الملف
+      extraCols.forEach(c=>fileKeys.add(c.replace(/\s+/g,'_')));
+      // مفاتيح داخلية لا تُحسب أبداً كأعمدة مفقودة
+      const internalKeys=new Set(['كود_المشروع','_updated_by','_updated_at']);
+
+      missingCols=[];
+      missingColDecisions={};
+      getCFs().forEach(cf=>{
+        const rawKey=cf.key.replace(/^cf_/,'');
+        if(internalKeys.has(rawKey)) return;
+        if(fileKeys.has(rawKey)) return; // موجود في الملف، ليس مفقوداً
+        // هل لهذا الحقل أي قيمة محفوظة فعلاً في المشاريع؟
+        const hasData=allProjects.some(p=>{
+          const v=getExtraVal(p.extra_fields||{}, rawKey);
+          return v && String(v).trim()!=='';
+        });
+        if(hasData){
+          missingCols.push({key:rawKey, label:cf.label});
+          missingColDecisions[rawKey]='keep'; // الافتراضي الآمن: إبقاء
+        }
+      });
+
+      const dups=Object.values(nameCount).filter(c=>c>1).length;
+      const missingNote = missingCols.length>0
+        ? `<br>⚠️ <b style="color:#d97706">أعمدة ستحتاج قراراً: ${missingCols.map(m=>m.label).join(' ، ')}</b>`
+        : '';
+      document.getElementById('importPreviewText').innerHTML=`
+        <b style="color:var(--navy)">✅ تم قراءة الملف بنجاح</b><br>
+        📊 عدد السجلات: <b>${parsedImportProjects.length}</b><br>
+        🔗 مشاريع متعددة المتعاقدين: <b>${dups}</b><br>
+        📋 أعمدة إضافية: <b>${extraCols.length>0?extraCols.join(' ، '):'لا يوجد'}</b>${missingNote}`;
+      document.getElementById('importPreview').style.display='block';
+
+      const btn=document.getElementById('importBtn');
+      btn.disabled=false; btn.style.opacity='1';
+      btn.textContent=`📥 استيراد ${parsedImportProjects.length} سجل`;
+
+    }catch(err){
+      showErr('importErr','❌ خطأ في قراءة الملف: '+err.message);
+      console.error('Import parse error:',err);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function openMissingColsModal(){
+  const list=document.getElementById('missingColsList');
+  list.innerHTML=missingCols.map(m=>`
+    <div class="cf-item" style="flex-direction:column;align-items:stretch;gap:8px">
+      <div style="font-size:13px;font-weight:700;color:var(--navy)">📊 ${m.label}</div>
+      <div style="display:flex;gap:6px">
+        <button class="btn btn-sm mc-choice" data-key="${m.key}" data-choice="keep"
+          style="flex:1;justify-content:center" onclick="setMissingColChoice('${m.key}','keep')">إبقاء القيم</button>
+        <button class="btn btn-sm mc-choice" data-key="${m.key}" data-choice="clear"
+          style="flex:1;justify-content:center" onclick="setMissingColChoice('${m.key}','clear')">مسح القيم</button>
+      </div>
+    </div>`).join('');
+  // ابرز الاختيار الافتراضي (إبقاء)
+  missingCols.forEach(m=>paintMissingColChoice(m.key));
+  document.getElementById('missingColsOv').classList.add('on');
+}
+
+function setMissingColChoice(key,choice){
+  missingColDecisions[key]=choice;
+  paintMissingColChoice(key);
+}
+
+function paintMissingColChoice(key){
+  document.querySelectorAll(`.mc-choice[data-key="${key}"]`).forEach(b=>{
+    const active=b.dataset.choice===missingColDecisions[key];
+    if(active){
+      b.classList.remove('btn-gray');
+      b.classList.add(b.dataset.choice==='clear'?'btn-red':'btn-green');
+    }else{
+      b.classList.remove('btn-green','btn-red');
+      b.classList.add('btn-gray');
+    }
+  });
+}
+
+function confirmMissingCols(){
+  window._missingColsResolved=true;
+  closeOv('missingColsOv');
+  doImport(); // استئناف الاستيراد بناءً على القرارات
+}
+
+async function doImport(){
+  if(typeof XLSX==='undefined'){ showErr('importErr','⚠️ مكتبة Excel غير محملة — أعد تحميل الصفحة'); return; }
+  if(!parsedImportProjects.length){ showErr('importErr','اختر ملفاً أولاً وانتظر ظهور المعاينة'); return; }
+
+  // لو فيه أعمدة مفقودة ولم يُتّخذ قرار بعد، اعرض نافذة القرارات وتوقّف
+  if(missingCols.length>0 && !window._missingColsResolved){
+    openMissingColsModal();
+    return;
+  }
+
+  const btn=document.getElementById('importBtn');
+  btn.disabled=true; btn.textContent='جاري الاستيراد...';
+  document.getElementById('importProgress').style.display='block';
+
+  try{
+    // ── 1. تسجيل الحقول المخصصة الجديدة ──
+    // ── سجّل الحقول المخصصة من EXTRA_FIELDS_DEF + أي أعمدة إضافية جديدة ──
+    const existingCFs=getCFs();
+    const existingKeys=new Set(existingCFs.map(f=>f.key));
+    const newCFs=[...existingCFs];
+    // الحقول الثابتة من الإكسل
+    Object.entries(EXTRA_FIELDS_DEF).forEach(([k,def])=>{
+      const cfKey='cf_'+k;
+      if(!existingKeys.has(cfKey)){
+        newCFs.push({key:cfKey,label:def.label,type:def.type,options:[]});
+        existingKeys.add(cfKey);
+      }
+    });
+    // أي أعمدة إضافية غير معروفة في الملف
+    const extraCols=parsedImportProjects[0]?._extraCols||[];
+    extraCols.forEach(c=>{
+      const cfKey='cf_'+c.replace(/\s+/g,'_');
+      if(!existingKeys.has(cfKey)){
+        newCFs.push({key:cfKey,label:c,type:'text',options:[]});
+        existingKeys.add(cfKey);
+      }
+    });
+    saveCFs(newCFs);
+
+    // ── 2. إضافة الإدارات والحالات الجديدة ──
+    const bf=getBasicFields();
+    [...new Set(parsedImportProjects.map(p=>p.department).filter(Boolean))].forEach(d=>{
+      if(!bf.departments.includes(d)) bf.departments.push(d);
+    });
+    if(!bf.statuses.find(s=>s.k==='CLOSING')) bf.statuses.push({k:'CLOSING',v:'إغلاق'});
+    saveBasicFields(bf);
+    populateDropdownSelectors();
+
+    // ── 3. فحص الاتصال بـ Supabase وأعمدة الجدول ──
+    const {data:testData,error:testError}=await sb.from('projects').select('id,name_ar').limit(1);
+    if(testError){
+      showErr('importErr','❌ خطأ Supabase: '+testError.message);
+      btn.disabled=false; btn.style.opacity='1'; btn.textContent='📥 بدء الاستيراد';
+      return;
+    }
+
+    // ── 4. جلب المشاريع الموجودة للمقارنة (مع extra_fields لتطبيق قرارات الإبقاء) ──
+    const {data:existingProjects=[]}=await sb.from('projects').select('id,name_ar,contractor,po_number,extra_fields');
+    const usedExistingIds=new Set(); // منع مطابقة نفس السجل لأكثر من صف
+    const total=parsedImportProjects.length;
+    let done=0,inserted=0,updated=0,errors=0;
+
+    for(const p of parsedImportProjects){
+      // eslint-disable-next-line no-unused-vars
+      const {_extraCols,...proj}=p;
+      const empId=getMyEmpId();
+
+      // المطابقة أولاً: رقم أمر الشراء (PO) لأنه مفتاح فريد ثابت، ثم الاسم + المتعاقد
+      let existing=null;
+      if(proj.po_number){
+        existing=(existingProjects||[]).find(e=>e.po_number&&String(e.po_number)===String(proj.po_number)&&!usedExistingIds.has(e.id));
+      }
+      if(!existing){
+        existing=(existingProjects||[]).find(e=>
+          !usedExistingIds.has(e.id) &&
+          e.name_ar?.trim()===proj.name_ar?.trim() &&
+          (e.contractor||'').trim()===(proj.contractor||'').trim()
+        );
+      }
+
+      // تطبيق قرارات الأعمدة المفقودة: "إبقاء" = انقل القيمة القديمة، "مسح" = اتركها فارغة
+      const baseExtra={...(proj.extra_fields||{})};
+      if(existing && missingCols.length>0){
+        const oldEx=existing.extra_fields||{};
+        missingCols.forEach(m=>{
+          if(missingColDecisions[m.key]==='keep'){
+            const oldVal=getExtraVal(oldEx,m.key);
+            if(oldVal && String(oldVal).trim()!=='') baseExtra[m.key]=oldVal;
+          }
+          // 'clear' لا يفعل شيئاً — تبقى القيمة غير موجودة فتُمسح فعلياً
+        });
+      }
+
+      // ✅ أضف _updated_by و_updated_at في extra_fields — محمية من الكتابة فوقها بالإكسل
+      const stampedExtra=stampEdit(baseExtra);
+      const obj={
+        name_ar:      proj.name_ar,
+        department:   proj.department,
+        status:       proj.status,
+        contractor:   proj.contractor||null,
+        po_number:    proj.po_number||null,
+        contract_manager_id: proj.contract_manager_id||null,
+        budget:       proj.budget,
+        vo_amount:    proj.vo_amount,
+        revised_value:proj.revised_value,
+        approved:     proj.approved,
+        spent:        proj.spent,
+        progress:     proj.progress,
+        planned_progress: proj.planned_progress,
+        project_status: proj.project_status,
+        pac_status:   proj.pac_status,
+        fac_status:   proj.fac_status,
+        delay_days:   proj.delay_days,
+        manager_id:   currentProfile.id,
+        extra_fields: stampedExtra,
+      };
+
+      let error;
+      if(existing){
+        usedExistingIds.add(existing.id);
+        ({error}=await sb.from('projects').update(obj).eq('id',existing.id));
+        if(!error) updated++;
+      }else{
+        ({error}=await sb.from('projects').insert(obj));
+        if(!error) inserted++;
+      }
+      if(error){
+        errors++;
+        if(errors===1){
+          document.getElementById('importProgressText').textContent='❌ خطأ Supabase: '+error.message+' | '+String(proj.name_ar||'').slice(0,25);
+        }
+        console.error('IMPORT_ERROR',JSON.stringify({msg:error.message,code:error.code,details:error.details,hint:error.hint}));
+      }
+
+      done++;
+      document.getElementById('importProgressBar').style.width=Math.round(done/total*100)+'%';
+      document.getElementById('importProgressText').textContent=
+        `جاري المعالجة... ${done}/${total}  (${inserted} جديد ، ${updated} محدّث)`;
+    }
+
+    // ✅ انتظر loadProjects أولاً ثم حدّث الواجهة
+    await loadProjects();
+    buildFilterFieldOptions();
+
+    const msg=errors>0
+      ?`⚠️ ${errors} خطأ من Supabase — افتح Console (F12) لتفاصيل الخطأ`
+      :`✅ ${inserted} سجل جديد ، ${updated} سجل محدّث`;
+
+    if(errors>0){
+      // ابقِ النافذة مفتوحة واعرض الخطأ
+      showErr('importErr', '❌ '+errors+' خطأ — تحقق من Console (F12) للتفاصيل. الأسباب الشائعة: عمود مفقود في قاعدة البيانات، أو نوع بيانات خاطئ');
+      btn.disabled=false; btn.style.opacity='1'; btn.textContent='📥 إعادة المحاولة';
+      return;
+    }
+
+    closeOv('importOv');
+    missingCols=[]; missingColDecisions={}; window._missingColsResolved=false;
+    toast(msg, '#059669');
+
+    // ✅ تأخير بسيط لضمان إغلاق الـ modal قبل بناء الصفحة
+    setTimeout(()=>{
+      const tabs=document.querySelectorAll('.tab');
+      if(tabs[2]) showPage(3, tabs[2]);
+    }, 100);
+
+  }catch(e){
+    showErr('importErr','❌ خطأ غير متوقع: '+e.message);
+    console.error('doImport error:',e);
+    btn.disabled=false; btn.style.opacity='1'; btn.textContent='📥 بدء الاستيراد';
+  }
+}
+</script>
+</body>
+</html>
