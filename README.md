@@ -1,1 +1,0 @@
-# West-Coast-Projects-Omar
